@@ -2,6 +2,8 @@
 
 This folder contains the Hostkit API collection file for Postman.
 
+WARNING: Be very careful when using AI-generated or “vibe-coded” integrations. Hostkit is not responsible for API misuse, incorrect implementations, or unintended actions caused by third-party code.
+
 ## Files
 
 - `postman.yaml` - Postman-importable API collection for the public Hostkit API.
