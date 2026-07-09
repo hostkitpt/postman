@@ -1,4 +1,4 @@
-# Hostkit API Postman Collection
+# Hostkit API Postman
 
 This folder contains the Hostkit API collection file for Postman.
 
