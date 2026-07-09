@@ -1,1017 +1,484 @@
-openapi: 3.0.3
 info:
-  title: Hostkit API
-  version: "1.0"
+  name: Hostkit API
+  schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
   description: Public Hostkit API collection for Postman.
-servers:
-  - url: "{baseUrl}"
-    variables:
-      baseUrl:
-        default: https://app.hostkit.pt/api
-        description: Hostkit API base URL.
-security:
-  - ApiKeyQuery: []
 
-tags:
+auth:
+  type: apikey
+  apikey:
+    - key: key
+      value: APIKEY
+      type: string
+    - key: value
+      value: "{{APIKEY}}"
+      type: string
+    - key: in
+      value: query
+      type: string
+
+variable:
+  - key: baseUrl
+    value: https://app.hostkit.pt/api
+  - key: APIKEY
+    value: your-api-key
+
+item:
   - name: Account
+    item:
+      - name: getLicense
+        request:
+          method: GET
+          url: "{{baseUrl}}/getLicense"
+
   - name: Properties
+    item:
+      - name: getProperties
+        request:
+          method: GET
+          url: "{{baseUrl}}/getProperties"
+
+      - name: getProperty
+        request:
+          method: GET
+          url: "{{baseUrl}}/getProperty"
+
+      - name: addProperty
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addProperty?property_name=&address=&zip=&city="
+            query:
+              - key: property_name
+                value: ""
+              - key: address
+                value: ""
+              - key: zip
+                value: ""
+              - key: city
+                value: ""
+              - key: latitude
+                value: ""
+                disabled: true
+              - key: longitude
+                value: ""
+                disabled: true
+              - key: default_checkin
+                value: ""
+                disabled: true
+              - key: default_checkout
+                value: ""
+                disabled: true
+              - key: license_number
+                value: ""
+                disabled: true
+              - key: license_type
+                value: ""
+                disabled: true
+              - key: typology
+                value: ""
+                disabled: true
+
+      - name: updateProperty
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/updateProperty"
+            query:
+              - key: property_name
+                value: ""
+                disabled: true
+              - key: address
+                value: ""
+                disabled: true
+              - key: zip
+                value: ""
+                disabled: true
+              - key: city
+                value: ""
+                disabled: true
+              - key: latitude
+                value: ""
+                disabled: true
+              - key: longitude
+                value: ""
+                disabled: true
+
   - name: Reservations
+    item:
+      - name: getReservations
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getReservations?from_date=2026-01-01&to_date=2026-01-31"
+            query:
+              - key: from_date
+                value: "2026-01-01"
+              - key: to_date
+                value: "2026-01-31"
+              - key: date_filter
+                value: checkin
+                disabled: true
+              - key: reservation_date
+                value: ""
+                disabled: true
+              - key: get_archived
+                value: "true"
+                disabled: true
+              - key: room
+                value: ""
+                disabled: true
+
+      - name: getReservation
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getReservation?rcode="
+            query:
+              - key: rcode
+                value: ""
+              - key: get_archived
+                value: "true"
+                disabled: true
+
+      - name: getReservationByCmId
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getReservationByCmId?channelmanager=&id="
+            query:
+              - key: channelmanager
+                value: ""
+              - key: id
+                value: ""
+
+      - name: addReservation
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addReservation?rcode=&check_in=2026-01-01&check_out=2026-01-02"
+            query:
+              - key: rcode
+                value: ""
+              - key: check_in
+                value: "2026-01-01"
+              - key: check_out
+                value: "2026-01-02"
+              - key: name
+                value: ""
+                disabled: true
+              - key: first_name
+                value: ""
+                disabled: true
+              - key: last_name
+                value: ""
+                disabled: true
+              - key: pax
+                value: ""
+                disabled: true
+              - key: email
+                value: ""
+                disabled: true
+              - key: phone
+                value: ""
+                disabled: true
+              - key: received_amount
+                value: ""
+                disabled: true
+              - key: provider
+                value: ""
+                disabled: true
+              - key: reservation_date
+                value: ""
+                disabled: true
+
+      - name: updateReservation
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/updateReservation?rcode="
+            query:
+              - key: rcode
+                value: ""
+              - key: check_in
+                value: ""
+                disabled: true
+              - key: check_out
+                value: ""
+                disabled: true
+              - key: name
+                value: ""
+                disabled: true
+              - key: email
+                value: ""
+                disabled: true
+              - key: phone
+                value: ""
+                disabled: true
+
+      - name: cancelReservation
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/cancelReservation?rcode="
+            query:
+              - key: rcode
+                value: ""
+
+      - name: deleteReservation
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/deleteReservation?rcode="
+            query:
+              - key: rcode
+                value: ""
+
+      - name: getPayments
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getPayments?rcode="
+            query:
+              - key: rcode
+                value: ""
+
+      - name: getOnlineCheckin
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getOnlineCheckin?rcode="
+            query:
+              - key: rcode
+                value: ""
+
+      - name: addReservationExtra
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addReservationExtra?rcode=&name=&value="
+            query:
+              - key: rcode
+                value: ""
+              - key: name
+                value: ""
+              - key: value
+                value: ""
+
+      - name: deleteReservationExtras
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/deleteReservationExtras?rcode="
+            query:
+              - key: rcode
+                value: ""
+
   - name: Guests
+    item:
+      - name: addGuest
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addGuest?rcode=&first_name=&last_name="
+            query:
+              - key: rcode
+                value: ""
+              - key: first_name
+                value: ""
+              - key: last_name
+                value: ""
+
+      - name: removeGuest
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/removeGuest?rcode=&id="
+            query:
+              - key: rcode
+                value: ""
+              - key: id
+                value: ""
+
+      - name: removeAllGuests
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/removeAllGuests?rcode="
+            query:
+              - key: rcode
+                value: ""
+
   - name: Smartlocks
+    item:
+      - name: getKeycode
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getKeycode?rcode=&provider="
+            query:
+              - key: rcode
+                value: ""
+              - key: provider
+                value: ""
+
   - name: Invoicing
+    item:
+      - name: getInvoices
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getInvoices?from_date=2026-01-01&to_date=2026-01-31"
+            query:
+              - key: from_date
+                value: "2026-01-01"
+              - key: to_date
+                value: "2026-01-31"
+
+      - name: getReservationInvoices
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getReservationInvoices?rcode="
+            query:
+              - key: rcode
+                value: ""
+
+      - name: getReceipts
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getReceipts?from_date=2026-01-01&to_date=2026-01-31"
+            query:
+              - key: from_date
+                value: "2026-01-01"
+              - key: to_date
+                value: "2026-01-31"
+
+      - name: getCreditNotes
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getCreditNotes?from_date=2026-01-01&to_date=2026-01-31"
+            query:
+              - key: from_date
+                value: "2026-01-01"
+              - key: to_date
+                value: "2026-01-31"
+
+      - name: addInvoice
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addInvoice?rcode="
+            query:
+              - key: rcode
+                value: ""
+
+      - name: addInvoiceLine
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addInvoiceLine?invoice=&description=&value="
+            query:
+              - key: invoice
+                value: ""
+              - key: description
+                value: ""
+              - key: value
+                value: ""
+
+      - name: closeInvoice
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/closeInvoice?invoice="
+            query:
+              - key: invoice
+                value: ""
+
+      - name: deleteInvoice
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/deleteInvoice?invoice="
+            query:
+              - key: invoice
+                value: ""
+
+      - name: addReceipt
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addReceipt?invoice="
+            query:
+              - key: invoice
+                value: ""
+
+      - name: addCreditNote
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addCreditNote?invoice="
+            query:
+              - key: invoice
+                value: ""
+
+      - name: generateSAFT
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/generateSAFT?year=2026&month=1"
+            query:
+              - key: year
+                value: "2026"
+              - key: month
+                value: "1"
+
+      - name: getSAFT
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getSAFT?year=2026&month=1"
+            query:
+              - key: year
+                value: "2026"
+              - key: month
+                value: "1"
+
   - name: Expenses
+    item:
+      - name: getExpenses
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getExpenses?from_date=2026-01-01&to_date=2026-01-31"
+            query:
+              - key: from_date
+                value: "2026-01-01"
+              - key: to_date
+                value: "2026-01-31"
+
   - name: SIBA
+    item:
+      - name: getLastSIBADate
+        request:
+          method: GET
+          url: "{{baseUrl}}/getLastSIBADate"
 
-paths:
-  /getLicense:
-    get:
-      tags: [Account]
-      operationId: getLicense
-      summary: Get account license plan and expiration date
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
+      - name: validateSIBA
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/validateSIBA?rcode="
+            query:
+              - key: rcode
+                value: ""
 
-  /getProperties:
-    get:
-      tags: [Properties]
-      operationId: getProperties
-      summary: List properties visible to the API key
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getProperty:
-    get:
-      tags: [Properties]
-      operationId: getProperty
-      summary: Get the property attached to the API key
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addProperty:
-    get:
-      tags: [Properties]
-      operationId: addProperty
-      summary: Create a property and return its API key
-      parameters:
-        - $ref: "#/components/parameters/property_name_required"
-        - $ref: "#/components/parameters/address_required"
-        - $ref: "#/components/parameters/zip_required"
-        - $ref: "#/components/parameters/city_required"
-        - $ref: "#/components/parameters/latitude"
-        - $ref: "#/components/parameters/longitude"
-        - $ref: "#/components/parameters/default_checkin"
-        - $ref: "#/components/parameters/default_checkout"
-        - $ref: "#/components/parameters/license_number"
-        - $ref: "#/components/parameters/license_type"
-        - $ref: "#/components/parameters/typology"
-        - $ref: "#/components/parameters/siba_id"
-        - $ref: "#/components/parameters/siba_order"
-        - $ref: "#/components/parameters/siba_code"
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/invoicing_name"
-        - $ref: "#/components/parameters/invoicing_email"
-        - $ref: "#/components/parameters/invoicing_phone"
-        - $ref: "#/components/parameters/invoicing_address"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /updateProperty:
-    get:
-      tags: [Properties]
-      operationId: updateProperty
-      summary: Update the property attached to the API key
-      parameters:
-        - $ref: "#/components/parameters/property_name"
-        - $ref: "#/components/parameters/address"
-        - $ref: "#/components/parameters/zip"
-        - $ref: "#/components/parameters/city"
-        - $ref: "#/components/parameters/latitude"
-        - $ref: "#/components/parameters/longitude"
-        - $ref: "#/components/parameters/default_checkin"
-        - $ref: "#/components/parameters/default_checkout"
-        - $ref: "#/components/parameters/license_number"
-        - $ref: "#/components/parameters/license_type"
-        - $ref: "#/components/parameters/siba_id"
-        - $ref: "#/components/parameters/siba_order"
-        - $ref: "#/components/parameters/siba_code"
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/invoicing_name"
-        - $ref: "#/components/parameters/invoicing_email"
-        - $ref: "#/components/parameters/invoicing_phone"
-        - $ref: "#/components/parameters/invoicing_address"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getReservations:
-    get:
-      tags: [Reservations]
-      operationId: getReservations
-      summary: List reservations filtered by check-in, checkout, or reservation date
-      description: Provide at least one of from_date, to_date, or reservation_date.
-      parameters:
-        - $ref: "#/components/parameters/from_date"
-        - $ref: "#/components/parameters/to_date"
-        - $ref: "#/components/parameters/date_filter"
-        - $ref: "#/components/parameters/reservation_date"
-        - $ref: "#/components/parameters/get_archived"
-        - $ref: "#/components/parameters/room"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getReservation:
-    get:
-      tags: [Reservations]
-      operationId: getReservation
-      summary: Get one reservation by Hostkit reservation code
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/get_archived"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getReservationByCmId:
-    get:
-      tags: [Reservations]
-      operationId: getReservationByCmId
-      summary: Get one reservation by channel manager and reservation ID
-      parameters:
-        - $ref: "#/components/parameters/channelmanager_required"
-        - $ref: "#/components/parameters/id_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addReservation:
-    get:
-      tags: [Reservations]
-      operationId: addReservation
-      summary: Create a reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/name"
-        - $ref: "#/components/parameters/first_name"
-        - $ref: "#/components/parameters/last_name"
-        - $ref: "#/components/parameters/check_in_required"
-        - $ref: "#/components/parameters/check_out_required"
-        - $ref: "#/components/parameters/pax"
-        - $ref: "#/components/parameters/email"
-        - $ref: "#/components/parameters/phone"
-        - $ref: "#/components/parameters/received_amount"
-        - $ref: "#/components/parameters/host_commission"
-        - $ref: "#/components/parameters/cleaning_fee"
-        - $ref: "#/components/parameters/extra_fees"
-        - $ref: "#/components/parameters/city_tax"
-        - $ref: "#/components/parameters/provider"
-        - $ref: "#/components/parameters/reservation_date"
-        - $ref: "#/components/parameters/room"
-        - $ref: "#/components/parameters/beds"
-        - $ref: "#/components/parameters/private_note"
-        - $ref: "#/components/parameters/service_notes"
-        - $ref: "#/components/parameters/vat_number"
-        - $ref: "#/components/parameters/vat_name"
-        - $ref: "#/components/parameters/flight"
-        - $ref: "#/components/parameters/flight_time"
-        - $ref: "#/components/parameters/arrival_by"
-        - $ref: "#/components/parameters/block_sef"
-        - $ref: "#/components/parameters/create_payment"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /updateReservation:
-    get:
-      tags: [Reservations]
-      operationId: updateReservation
-      summary: Update a reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/name"
-        - $ref: "#/components/parameters/first_name"
-        - $ref: "#/components/parameters/last_name"
-        - $ref: "#/components/parameters/check_in"
-        - $ref: "#/components/parameters/check_out"
-        - $ref: "#/components/parameters/pax"
-        - $ref: "#/components/parameters/email"
-        - $ref: "#/components/parameters/phone"
-        - $ref: "#/components/parameters/received_amount"
-        - $ref: "#/components/parameters/host_commission"
-        - $ref: "#/components/parameters/cleaning_fee"
-        - $ref: "#/components/parameters/extra_fees"
-        - $ref: "#/components/parameters/city_tax"
-        - $ref: "#/components/parameters/provider"
-        - $ref: "#/components/parameters/room"
-        - $ref: "#/components/parameters/beds"
-        - $ref: "#/components/parameters/private_note"
-        - $ref: "#/components/parameters/service_notes"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /cancelReservation:
-    get:
-      tags: [Reservations]
-      operationId: cancelReservation
-      summary: Move a reservation to cancellations
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /deleteReservation:
-    get:
-      tags: [Reservations]
-      operationId: deleteReservation
-      summary: Permanently delete a reservation and related records
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getPayments:
-    get:
-      tags: [Reservations]
-      operationId: getPayments
-      summary: Get all payments for one reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getOnlineCheckin:
-    get:
-      tags: [Reservations]
-      operationId: getOnlineCheckin
-      summary: Get online check-in link and status
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addGuest:
-    get:
-      tags: [Guests]
-      operationId: addGuest
-      summary: Add guest data to a reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/name"
-        - $ref: "#/components/parameters/first_name"
-        - $ref: "#/components/parameters/last_name"
-        - $ref: "#/components/parameters/nationality"
-        - $ref: "#/components/parameters/birthday"
-        - $ref: "#/components/parameters/doc_id"
-        - $ref: "#/components/parameters/doc_type"
-        - $ref: "#/components/parameters/doc_country"
-        - $ref: "#/components/parameters/arrival"
-        - $ref: "#/components/parameters/departure"
-        - $ref: "#/components/parameters/country_residence"
-        - $ref: "#/components/parameters/city_residence"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /removeGuest:
-    get:
-      tags: [Guests]
-      operationId: removeGuest
-      summary: Remove one guest from a reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/name"
-        - $ref: "#/components/parameters/first_name"
-        - $ref: "#/components/parameters/last_name"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /removeAllGuests:
-    get:
-      tags: [Guests]
-      operationId: removeAllGuests
-      summary: Remove all guest data from a reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getKeycode:
-    get:
-      tags: [Smartlocks]
-      operationId: getKeycode
-      summary: Get smartlock keycode or invite code
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/smartlock_provider_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getInvoices:
-    get:
-      tags: [Invoicing]
-      operationId: getInvoices
-      summary: List invoices or filter a specific invoice
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/customer_id"
-        - $ref: "#/components/parameters/date_start"
-        - $ref: "#/components/parameters/date_end"
-        - $ref: "#/components/parameters/doc_type"
-        - $ref: "#/components/parameters/source"
-        - $ref: "#/components/parameters/show_property"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getReservationInvoices:
-    get:
-      tags: [Invoicing]
-      operationId: getReservationInvoices
-      summary: List invoices for one reservation
-      parameters:
-        - $ref: "#/components/parameters/rcode_required"
-        - $ref: "#/components/parameters/invoicing_nif"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getReceipts:
-    get:
-      tags: [Invoicing]
-      operationId: getReceipts
-      summary: List receipts or filter a specific receipt
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/customer_id"
-        - $ref: "#/components/parameters/date_start"
-        - $ref: "#/components/parameters/date_end"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getCreditNotes:
-    get:
-      tags: [Invoicing]
-      operationId: getCreditNotes
-      summary: List credit notes or filter a specific credit note
-      parameters:
-        - $ref: "#/components/parameters/invoice_type"
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/id"
-        - $ref: "#/components/parameters/customer_id"
-        - $ref: "#/components/parameters/date_start"
-        - $ref: "#/components/parameters/date_end"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addInvoice:
-    get:
-      tags: [Invoicing]
-      operationId: addInvoice
-      summary: Create an open invoice document
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/invoice_type"
-        - $ref: "#/components/parameters/customer_id_required"
-        - $ref: "#/components/parameters/customer_name_required"
-        - $ref: "#/components/parameters/country_required"
-        - $ref: "#/components/parameters/address"
-        - $ref: "#/components/parameters/cp"
-        - $ref: "#/components/parameters/city"
-        - $ref: "#/components/parameters/rcode"
-        - $ref: "#/components/parameters/comment"
-        - $ref: "#/components/parameters/payment_method"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addInvoiceLine:
-    get:
-      tags: [Invoicing]
-      operationId: addInvoiceLine
-      summary: Add a line to an open invoice
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/id_required"
-        - $ref: "#/components/parameters/invoice_type"
-        - $ref: "#/components/parameters/product_id_required"
-        - $ref: "#/components/parameters/custom_descr_required"
-        - $ref: "#/components/parameters/qty_required"
-        - $ref: "#/components/parameters/price_required"
-        - $ref: "#/components/parameters/discount_required"
-        - $ref: "#/components/parameters/vat_required"
-        - $ref: "#/components/parameters/reason_code_required"
-        - $ref: "#/components/parameters/region"
-        - $ref: "#/components/parameters/product_type"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /closeInvoice:
-    get:
-      tags: [Invoicing]
-      operationId: closeInvoice
-      summary: Close an open invoice
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/id_required"
-        - $ref: "#/components/parameters/invoice_type"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /deleteInvoice:
-    get:
-      tags: [Invoicing]
-      operationId: deleteInvoice
-      summary: Delete an open invoice
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/series"
-        - $ref: "#/components/parameters/id_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addReceipt:
-    get:
-      tags: [Invoicing]
-      operationId: addReceipt
-      summary: Create a receipt for an FT invoice
-      parameters:
-        - $ref: "#/components/parameters/refseries_required"
-        - $ref: "#/components/parameters/refid_required"
-        - $ref: "#/components/parameters/invoicing_nif"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /addCreditNote:
-    get:
-      tags: [Invoicing]
-      operationId: addCreditNote
-      summary: Create a credit note for a closed invoice
-      parameters:
-        - $ref: "#/components/parameters/refseries_required"
-        - $ref: "#/components/parameters/refid_required"
-        - $ref: "#/components/parameters/invoicing_nif"
-        - $ref: "#/components/parameters/invoice_type"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getSAFT:
-    get:
-      tags: [Invoicing]
-      operationId: getSAFT
-      summary: Get a generated SAF-T file as base64
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif_required"
-        - $ref: "#/components/parameters/year_required"
-        - $ref: "#/components/parameters/month_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /generateSAFT:
-    get:
-      tags: [Invoicing]
-      operationId: generateSAFT
-      summary: Generate a SAF-T file
-      parameters:
-        - $ref: "#/components/parameters/invoicing_nif_required"
-        - $ref: "#/components/parameters/year_required"
-        - $ref: "#/components/parameters/month_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getExpenses:
-    get:
-      tags: [Expenses]
-      operationId: getExpenses
-      summary: List expenses by document date range
-      parameters:
-        - $ref: "#/components/parameters/date_start_required"
-        - $ref: "#/components/parameters/date_end_required"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /getLastSIBADate:
-    get:
-      tags: [SIBA]
-      operationId: getLastSIBADate
-      summary: Get the last successfully submitted SIBA bulletin date
-      responses:
-        "200": { $ref: "#/components/responses/TextResponse" }
-
-  /validateSIBA:
-    get:
-      tags: [SIBA]
-      operationId: validateSIBA
-      summary: Validate SIBA data for a reservation or explicit guest data
-      parameters:
-        - $ref: "#/components/parameters/rcode"
-        - $ref: "#/components/parameters/name"
-        - $ref: "#/components/parameters/first_name"
-        - $ref: "#/components/parameters/last_name"
-        - $ref: "#/components/parameters/nationality"
-        - $ref: "#/components/parameters/birthday"
-        - $ref: "#/components/parameters/doc_id"
-        - $ref: "#/components/parameters/doc_type"
-        - $ref: "#/components/parameters/doc_country"
-        - $ref: "#/components/parameters/arrival"
-        - $ref: "#/components/parameters/departure"
-        - $ref: "#/components/parameters/country_residence"
-        - $ref: "#/components/parameters/city_residence"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-  /sendSIBA:
-    get:
-      tags: [SIBA]
-      operationId: sendSIBA
-      summary: Submit SIBA data for a reservation or explicit guest data
-      parameters:
-        - $ref: "#/components/parameters/rcode"
-        - $ref: "#/components/parameters/name"
-        - $ref: "#/components/parameters/first_name"
-        - $ref: "#/components/parameters/last_name"
-        - $ref: "#/components/parameters/nationality"
-        - $ref: "#/components/parameters/birthday"
-        - $ref: "#/components/parameters/doc_id"
-        - $ref: "#/components/parameters/doc_type"
-        - $ref: "#/components/parameters/doc_country"
-        - $ref: "#/components/parameters/arrival"
-        - $ref: "#/components/parameters/departure"
-        - $ref: "#/components/parameters/country_residence"
-        - $ref: "#/components/parameters/city_residence"
-      responses:
-        "200": { $ref: "#/components/responses/JsonResponse" }
-
-components:
-  securitySchemes:
-    ApiKeyQuery:
-      type: apiKey
-      in: query
-      name: APIKEY
-
-  responses:
-    JsonResponse:
-      description: JSON response. Errors are returned as JSON objects with an error field.
-      content:
-        application/json:
-          schema: {}
-    TextResponse:
-      description: Text or JSON response.
-      content:
-        text/plain:
-          schema:
-            type: string
-        application/json:
-          schema: {}
-
-  parameters:
-    id:
-      name: id
-      in: query
-      schema: { type: string }
-    id_required:
-      name: id
-      in: query
-      required: true
-      schema: { type: string }
-    rcode:
-      name: rcode
-      in: query
-      schema: { type: string }
-    rcode_required:
-      name: rcode
-      in: query
-      required: true
-      schema: { type: string }
-    channelmanager_required:
-      name: channelmanager
-      in: query
-      required: true
-      schema: { type: string }
-
-    from_date:
-      name: from_date
-      in: query
-      schema: { type: string, format: date }
-    to_date:
-      name: to_date
-      in: query
-      schema: { type: string, format: date }
-    reservation_date:
-      name: reservation_date
-      in: query
-      schema: { type: string, format: date }
-    date_filter:
-      name: date_filter
-      in: query
-      schema:
-        type: string
-        enum: [checkin, checkout]
-    get_archived:
-      name: get_archived
-      in: query
-      schema:
-        type: string
-        enum: ["true", "false"]
-
-    invoicing_nif:
-      name: invoicing_nif
-      in: query
-      schema: { type: string }
-    invoicing_nif_required:
-      name: invoicing_nif
-      in: query
-      required: true
-      schema: { type: string }
-    invoicing_name:
-      name: invoicing_name
-      in: query
-      schema: { type: string }
-    invoicing_email:
-      name: invoicing_email
-      in: query
-      schema: { type: string, format: email }
-    invoicing_phone:
-      name: invoicing_phone
-      in: query
-      schema: { type: string }
-    invoicing_address:
-      name: invoicing_address
-      in: query
-      schema: { type: string }
-    series:
-      name: series
-      in: query
-      schema: { type: string }
-    customer_id:
-      name: customer_id
-      in: query
-      schema: { type: string }
-    customer_id_required:
-      name: customer_id
-      in: query
-      required: true
-      schema: { type: string }
-    customer_name_required:
-      name: name
-      in: query
-      required: true
-      schema: { type: string }
-    date_start:
-      name: date_start
-      in: query
-      schema: { type: string, description: Unix timestamp }
-    date_start_required:
-      name: date_start
-      in: query
-      required: true
-      schema: { type: string, description: Unix timestamp }
-    date_end:
-      name: date_end
-      in: query
-      schema: { type: string, description: Unix timestamp }
-    date_end_required:
-      name: date_end
-      in: query
-      required: true
-      schema: { type: string, description: Unix timestamp }
-    doc_type:
-      name: doc_type
-      in: query
-      schema: { type: string }
-    source:
-      name: source
-      in: query
-      schema: { type: string }
-    show_property:
-      name: show_property
-      in: query
-      schema:
-        type: integer
-        enum: [0, 1]
-    invoice_type:
-      name: invoice_type
-      in: query
-      schema:
-        type: string
-        enum: [FR, FT]
-    refseries_required:
-      name: refseries
-      in: query
-      required: true
-      schema: { type: string }
-    refid_required:
-      name: refid
-      in: query
-      required: true
-      schema: { type: string }
-    year_required:
-      name: year
-      in: query
-      required: true
-      schema: { type: string, pattern: "^[0-9]{4}$" }
-    month_required:
-      name: month
-      in: query
-      required: true
-      schema: { type: string }
-
-    product_id_required:
-      name: product_id
-      in: query
-      required: true
-      schema: { type: string }
-    custom_descr_required:
-      name: custom_descr
-      in: query
-      required: true
-      schema: { type: string }
-    qty_required:
-      name: qty
-      in: query
-      required: true
-      schema: { type: string }
-    price_required:
-      name: price
-      in: query
-      required: true
-      schema: { type: string }
-    discount_required:
-      name: discount
-      in: query
-      required: true
-      schema: { type: string }
-    vat_required:
-      name: vat
-      in: query
-      required: true
-      schema: { type: string }
-    reason_code_required:
-      name: reason_code
-      in: query
-      required: true
-      schema: { type: string }
-    region:
-      name: region
-      in: query
-      schema:
-        type: string
-        enum: [PT, PT-MA, PT-AC]
-    product_type:
-      name: type
-      in: query
-      schema:
-        type: string
-        enum: [S, P, I]
-
-    smartlock_provider_required:
-      name: provider
-      in: query
-      required: true
-      schema:
-        type: string
-        enum: [nuki, homeit, ttlock, salto, omnitec, voyager, tedee, assa_abloy]
-
-    property_name:
-      name: property_name
-      in: query
-      schema: { type: string }
-    property_name_required:
-      name: property_name
-      in: query
-      required: true
-      schema: { type: string }
-    address:
-      name: address
-      in: query
-      schema: { type: string }
-    address_required:
-      name: address
-      in: query
-      required: true
-      schema: { type: string }
-    zip:
-      name: zip
-      in: query
-      schema: { type: string }
-    zip_required:
-      name: zip
-      in: query
-      required: true
-      schema: { type: string }
-    city:
-      name: city
-      in: query
-      schema: { type: string }
-    city_required:
-      name: city
-      in: query
-      required: true
-      schema: { type: string }
-    latitude:
-      name: latitude
-      in: query
-      schema: { type: string }
-    longitude:
-      name: longitude
-      in: query
-      schema: { type: string }
-    default_checkin:
-      name: default_checkin
-      in: query
-      schema: { type: integer, minimum: 0, maximum: 23 }
-    default_checkout:
-      name: default_checkout
-      in: query
-      schema: { type: integer, minimum: 0, maximum: 23 }
-    license_number:
-      name: license_number
-      in: query
-      schema: { type: string }
-    license_type:
-      name: license_type
-      in: query
-      schema:
-        type: string
-        enum: [RNAL, RNET, RRAL]
-    typology:
-      name: typology
-      in: query
-      schema:
-        type: string
-        enum: [T0, T1, T2, T3, T4, T5, T6, NA]
-    siba_id:
-      name: siba_id
-      in: query
-      schema: { type: string }
-    siba_order:
-      name: siba_order
-      in: query
-      schema: { type: string }
-    siba_code:
-      name: siba_code
-      in: query
-      schema: { type: string }
-
-    name:
-      name: name
-      in: query
-      schema: { type: string }
-    first_name:
-      name: first_name
-      in: query
-      schema: { type: string }
-    last_name:
-      name: last_name
-      in: query
-      schema: { type: string }
-    check_in:
-      name: check_in
-      in: query
-      schema: { type: string, example: "2023-05-20 16:00" }
-    check_in_required:
-      name: check_in
-      in: query
-      required: true
-      schema: { type: string, example: "2023-05-20 16:00" }
-    check_out:
-      name: check_out
-      in: query
-      schema: { type: string, example: "2023-05-25 11:00" }
-    check_out_required:
-      name: check_out
-      in: query
-      required: true
-      schema: { type: string, example: "2023-05-25 11:00" }
-    pax:
-      name: pax
-      in: query
-      schema: { type: integer }
-    email:
-      name: email
-      in: query
-      schema: { type: string, format: email }
-    phone:
-      name: phone
-      in: query
-      schema: { type: string }
-    received_amount:
-      name: received_amount
-      in: query
-      schema: { type: string }
-    host_commission:
-      name: host_commission
-      in: query
-      schema: { type: string }
-    cleaning_fee:
-      name: cleaning_fee
-      in: query
-      schema: { type: string }
-    extra_fees:
-      name: extra_fees
-      in: query
-      schema: { type: string }
-    city_tax:
-      name: city_tax
-      in: query
-      schema: { type: string }
-    provider:
-      name: provider
-      in: query
-      schema: { type: string }
-    room:
-      name: room
-      in: query
-      schema: { type: string }
-    beds:
-      name: beds
-      in: query
-      schema: { type: string }
-    private_note:
-      name: private_note
-      in: query
-      schema: { type: string }
-    service_notes:
-      name: service_notes
-      in: query
-      schema: { type: string }
-    vat_number:
-      name: vat_number
-      in: query
-      schema: { type: string }
-    vat_name:
-      name: vat_name
-      in: query
-      schema: { type: string }
-    flight:
-      name: flight
-      in: query
-      schema: { type: string }
-    flight_time:
-      name: flight_time
-      in: query
-      schema: { type: string }
-    arrival_by:
-      name: arrival_by
-      in: query
-      schema: { type: string }
-    block_sef:
-      name: block_sef
-      in: query
-      schema:
-        type: integer
-        enum: [0, 1]
-    create_payment:
-      name: create_payment
-      in: query
-      schema:
-        type: integer
-        enum: [0, 1]
-
-    nationality:
-      name: nationality
-      in: query
-      schema: { type: string, description: ICAO or ISO country code }
-    birthday:
-      name: birthday
-      in: query
-      schema: { type: string, format: date }
-    doc_id:
-      name: doc_id
-      in: query
-      schema: { type: string }
-    doc_country:
-      name: doc_country
-      in: query
-      schema: { type: string, description: ICAO or ISO country code }
-    arrival:
-      name: arrival
-      in: query
-      schema: { type: string, format: date }
-    departure:
-      name: departure
-      in: query
-      schema: { type: string, format: date }
-    country_residence:
-      name: country_residence
-      in: query
-      schema: { type: string, description: ICAO or ISO country code }
-    city_residence:
-      name: city_residence
-      in: query
-      schema: { type: string }
-    country_required:
-      name: country
-      in: query
-      required: true
-      schema: { type: string, description: Country code }
-    cp:
-      name: cp
-      in: query
-      schema: { type: string }
-    comment:
-      name: comment
-      in: query
-      schema: { type: string }
-    payment_method:
-      name: payment_method
-      in: query
-      schema: { type: string }
+      - name: sendSIBA
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/sendSIBA?rcode="
+            query:
+              - key: rcode
+                value: ""
