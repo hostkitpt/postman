@@ -2,8 +2,8 @@
 
 This folder contains the Hostkit API collection file for Postman.
 
-Private API documentation: https://hostkit.pt/api/
-Public LLMs index: https://hostkit.pt/api/llms.txt
+- Private API documentation: https://hostkit.pt/api/
+- Public LLMs index: https://hostkit.pt/api/llms.txt
 
 For enhanced security, API keys are property based, therefore must be generated and maintained in the Hostkit App -> Properties -> API key tab of each property.
 
