@@ -654,6 +654,12 @@ item:
               - key: rcode
                 value: ""
                 disabled: true
+              - key: active
+                value: "1"
+                disabled: true
+              - key: pmc
+                value: "0"
+                disabled: true
 
       - name: addExpenseLine
         request:
@@ -675,6 +681,15 @@ item:
           method: GET
           url:
             raw: "{{baseUrl}}/deleteExpense?id="
+            query:
+              - key: id
+                value: ""
+
+      - name: disableExpense
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/disableExpense?id="
             query:
               - key: id
                 value: ""
