@@ -155,24 +155,21 @@ item:
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addReservation?rcode=&check_in=2026-01-01&check_out=2026-01-02"
+            raw: "{{baseUrl}}/addReservation?rcode=&first_name=&last_name=&check_in=2026-01-01&check_out=2026-01-02&pax=2"
             query:
               - key: rcode
+                value: ""
+              - key: first_name
+                value: ""
+              - key: last_name
                 value: ""
               - key: check_in
                 value: "2026-01-01"
               - key: check_out
                 value: "2026-01-02"
-              - key: name
-                value: ""
-                disabled: true
-              - key: first_name
-                value: ""
-                disabled: true
-              - key: last_name
-                value: ""
-                disabled: true
               - key: pax
+                value: "2"
+              - key: name
                 value: ""
                 disabled: true
               - key: email
@@ -255,13 +252,19 @@ item:
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addReservationExtra?rcode=&name=&value="
+            raw: "{{baseUrl}}/addReservationExtra?rcode=&extra_id=&extra_name=&extra_vat=&extra_total=&extra_type="
             query:
               - key: rcode
                 value: ""
-              - key: name
+              - key: extra_id
                 value: ""
-              - key: value
+              - key: extra_name
+                value: ""
+              - key: extra_vat
+                value: ""
+              - key: extra_total
+                value: ""
+              - key: extra_type
                 value: ""
 
       - name: deleteReservationExtras
@@ -279,24 +282,42 @@ item:
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addGuest?rcode=&first_name=&last_name="
+            raw: "{{baseUrl}}/addGuest?rcode=&arrival=&departure=&first_name=&last_name=&nationality=&birthday=&doc_id=&doc_type=&doc_country=&country_residence=&city_residence="
             query:
               - key: rcode
+                value: ""
+              - key: arrival
+                value: ""
+              - key: departure
                 value: ""
               - key: first_name
                 value: ""
               - key: last_name
+                value: ""
+              - key: nationality
+                value: ""
+              - key: birthday
+                value: ""
+              - key: doc_id
+                value: ""
+              - key: doc_type
+                value: ""
+              - key: doc_country
+                value: ""
+              - key: country_residence
+                value: ""
+              - key: city_residence
                 value: ""
 
       - name: removeGuest
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/removeGuest?rcode=&id="
+            raw: "{{baseUrl}}/removeGuest?rcode=&name="
             query:
               - key: rcode
                 value: ""
-              - key: id
+              - key: name
                 value: ""
 
       - name: removeAllGuests
@@ -327,12 +348,35 @@ item:
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/getInvoices?from_date=2026-01-01&to_date=2026-01-31"
+            raw: "{{baseUrl}}/getInvoices"
             query:
-              - key: from_date
-                value: "2026-01-01"
-              - key: to_date
-                value: "2026-01-31"
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: id
+                value: ""
+                disabled: true
+              - key: customer_id
+                value: ""
+                disabled: true
+              - key: date_start
+                value: ""
+                disabled: true
+              - key: date_end
+                value: ""
+                disabled: true
+              - key: doc_type
+                value: ""
+                disabled: true
+              - key: source
+                value: ""
+                disabled: true
+              - key: show_property
+                value: "1"
+                disabled: true
 
       - name: getReservationInvoices
         request:
@@ -342,93 +386,216 @@ item:
             query:
               - key: rcode
                 value: ""
+              - key: invoicing_nif
+                value: ""
+                disabled: true
 
       - name: getReceipts
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/getReceipts?from_date=2026-01-01&to_date=2026-01-31"
+            raw: "{{baseUrl}}/getReceipts"
             query:
-              - key: from_date
-                value: "2026-01-01"
-              - key: to_date
-                value: "2026-01-31"
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: id
+                value: ""
+                disabled: true
+              - key: customer_id
+                value: ""
+                disabled: true
+              - key: date_start
+                value: ""
+                disabled: true
+              - key: date_end
+                value: ""
+                disabled: true
 
       - name: getCreditNotes
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/getCreditNotes?from_date=2026-01-01&to_date=2026-01-31"
+            raw: "{{baseUrl}}/getCreditNotes"
             query:
-              - key: from_date
-                value: "2026-01-01"
-              - key: to_date
-                value: "2026-01-31"
+              - key: invoice_type
+                value: FR
+                disabled: true
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: id
+                value: ""
+                disabled: true
+              - key: customer_id
+                value: ""
+                disabled: true
+              - key: date_start
+                value: ""
+                disabled: true
+              - key: date_end
+                value: ""
+                disabled: true
 
       - name: addInvoice
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addInvoice?rcode="
+            raw: "{{baseUrl}}/addInvoice?customer_id=&name=&country="
             query:
+              - key: customer_id
+                value: ""
+              - key: name
+                value: ""
+              - key: country
+                value: ""
+              - key: invoice_type
+                value: FR
+                disabled: true
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: address
+                value: ""
+                disabled: true
+              - key: cp
+                value: ""
+                disabled: true
+              - key: city
+                value: ""
+                disabled: true
               - key: rcode
                 value: ""
+                disabled: true
+              - key: payment_method
+                value: ""
+                disabled: true
+              - key: comment
+                value: ""
+                disabled: true
 
       - name: addInvoiceLine
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addInvoiceLine?invoice=&description=&value="
+            raw: "{{baseUrl}}/addInvoiceLine?id=&product_id=&custom_descr=&qty=&price=&discount=&vat=&reason_code="
             query:
-              - key: invoice
+              - key: id
                 value: ""
-              - key: description
+              - key: product_id
                 value: ""
-              - key: value
+              - key: custom_descr
                 value: ""
+              - key: qty
+                value: ""
+              - key: price
+                value: ""
+              - key: discount
+                value: ""
+              - key: vat
+                value: ""
+              - key: reason_code
+                value: ""
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: type
+                value: S
+                disabled: true
+              - key: region
+                value: PT
+                disabled: true
+              - key: invoice_type
+                value: FR
+                disabled: true
 
       - name: closeInvoice
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/closeInvoice?invoice="
+            raw: "{{baseUrl}}/closeInvoice?id="
             query:
-              - key: invoice
+              - key: id
                 value: ""
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: invoice_type
+                value: FR
+                disabled: true
 
       - name: deleteInvoice
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/deleteInvoice?invoice="
+            raw: "{{baseUrl}}/deleteInvoice?id="
             query:
-              - key: invoice
+              - key: id
                 value: ""
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+              - key: series
+                value: ""
+                disabled: true
+              - key: invoice_type
+                value: FR
+                disabled: true
 
       - name: addReceipt
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addReceipt?invoice="
+            raw: "{{baseUrl}}/addReceipt?refseries=&refid="
             query:
-              - key: invoice
+              - key: refseries
                 value: ""
+              - key: refid
+                value: ""
+              - key: invoicing_nif
+                value: ""
+                disabled: true
 
       - name: addCreditNote
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/addCreditNote?invoice="
+            raw: "{{baseUrl}}/addCreditNote?refseries=&refid="
             query:
-              - key: invoice
+              - key: refseries
                 value: ""
+              - key: refid
+                value: ""
+              - key: invoice_type
+                value: FR
+                disabled: true
+              - key: invoicing_nif
+                value: ""
+                disabled: true
 
       - name: generateSAFT
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/generateSAFT?year=2026&month=1"
+            raw: "{{baseUrl}}/generateSAFT?invoicing_nif=&year=2026&month=1"
             query:
+              - key: invoicing_nif
+                value: ""
               - key: year
                 value: "2026"
               - key: month
@@ -438,8 +605,10 @@ item:
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/getSAFT?year=2026&month=1"
+            raw: "{{baseUrl}}/getSAFT?invoicing_nif=&year=2026&month=1"
             query:
+              - key: invoicing_nif
+                value: ""
               - key: year
                 value: "2026"
               - key: month
@@ -451,12 +620,64 @@ item:
         request:
           method: GET
           url:
-            raw: "{{baseUrl}}/getExpenses?from_date=2026-01-01&to_date=2026-01-31"
+            raw: "{{baseUrl}}/getExpenses?date_start=1767225600&date_end=1769817599"
             query:
-              - key: from_date
-                value: "2026-01-01"
-              - key: to_date
-                value: "2026-01-31"
+              - key: date_start
+                value: "1767225600"
+              - key: date_end
+                value: "1769817599"
+
+      - name: addExpense
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addExpense?category=20&document=invoice&type=variable&vendor=Example%20Vendor&number=FT%20123&date=2026-09-25"
+            query:
+              - key: category
+                value: "20"
+              - key: document
+                value: invoice
+              - key: type
+                value: variable
+              - key: vendor
+                value: Example Vendor
+              - key: number
+                value: FT 123
+              - key: date
+                value: "2026-09-25"
+              - key: description
+                value: ""
+                disabled: true
+              - key: payment_date
+                value: ""
+                disabled: true
+              - key: rcode
+                value: ""
+                disabled: true
+
+      - name: addExpenseLine
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/addExpenseLine?id=123&description=Repair&amount=123.00&vat_rate=23"
+            query:
+              - key: id
+                value: "123"
+              - key: description
+                value: Repair
+              - key: amount
+                value: "123.00"
+              - key: vat_rate
+                value: "23"
+
+      - name: deleteExpense
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/deleteExpense?id="
+            query:
+              - key: id
+                value: ""
 
   - name: SIBA
     item:
