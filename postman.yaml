@@ -389,6 +389,26 @@ item:
               - key: invoicing_nif
                 value: ""
                 disabled: true
+      
+      - name: getSeries
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getSeries?invoicing_nif="
+            query:
+              - key: invoicing_nif
+                value: ""
+                disabled: true
+
+      - name: getProducts
+        request:
+          method: GET
+          url:
+            raw: "{{baseUrl}}/getProducts?invoicing_nif="
+            query:
+              - key: invoicing_nif
+                value: ""
+                disabled: true
 
       - name: getReceipts
         request:
