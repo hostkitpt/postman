@@ -47,3 +47,7 @@ The collection file defines this as a `baseUrl` server variable so it can be cha
 ## Validation
 
 The file is YAML and can be imported directly into Postman.
+
+## Changelog
+
+https://hostkit.pt/api/changelog.md
