@@ -127,6 +127,15 @@ item:
               - key: room
                 value: ""
                 disabled: true
+              - key: provider
+                value: ""
+                disabled: true
+              - key: language
+                value: ""
+                disabled: true
+              - key: nif
+                value: ""
+                disabled: true
 
       - name: getReservation
         request:
