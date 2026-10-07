@@ -1932,6 +1932,12 @@ item:
         Uploading an attachment does not parse QR codes, change expense lines/totals, or fetch a client URL.
 
 
+        Expense uploads share a validation-service rate limit of 1 call per second across all clients. There is no waiting
+        queue or automatic retry. When the validation service returns HTTP 429, the API responds with HTTP 503, code validation_unavailable
+        and message "Expense uploads have a rate limit of 1 per second"; no file is saved and the existing attachment remains
+        unchanged.
+
+
         Parameters
 
 
