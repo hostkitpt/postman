@@ -53,9 +53,10 @@ info:
     ### Use with Postman
 
 
-    Import the collection and the **Hostkit API v2** environment. Set `apiKey` and `apiSecret` locally, leaving their shared
-    values empty, and keep requests set to **Inherit auth from parent**. The collection configures API Key authentication
-    with header `X-API-Key`. Its pre-request script also generates the mandatory timestamp, nonce and HMAC signature.
+    Import the collection; no separate environment is required. Set the collection variables `apiKey` and `apiSecret` locally,
+    leaving their shared values empty, and keep requests set to **Inherit auth from parent**. The collection configures API
+    Key authentication with header `X-API-Key`. Its pre-request script also generates the mandatory timestamp, nonce and HMAC
+    signature.
 
 
     The script substitutes variables in the raw JSON before signing, preserving whitespace and field order. The examples use
