@@ -1,506 +1,165 @@
 info:
   name: Hostkit API v2
-  description: '# Hostkit API v2
-
-
-    Our REST based API allows you to get access to the Hostkit application. On this page we explain you a little bit more
-    detailed what you need for your use case as a host.
-
-
-    Please [contact us](https://hostkit.pt/suporte/) before you start coding. Tell us a few words about your ideas and plans.
-    We are always happy to help our customers and partners to build the best integrated applications.
-
-
-    If you have any questions about our API, please feel free to open a ticket in our [Helpdesk](https://hostkit.pt/suporte/).
-
-
-    For agents/LLMs, use the API v2 Markdown references and downloadable Postman collection.
-
-
-    **WARNING:** Be very careful when using AI-generated or "vibe-coded" integrations. Hostkit is not responsible for API
-    misuse, incorrect implementations, or unintended actions caused by third-party code.
-
-
-    Base URL: `https://app.hostkit.pt/api/v2`
-
-
-    ## Authentication
-
-
-    Every request requires an API key and an HMAC-SHA256 signature. An API key alone is not sufficient.
-
-
-    Create your credentials in Hostkit My Account. Store the API key and the HMAC secret securely; the secret is shown only
-    when the key is created. Never put credentials in URLs or request bodies, or include them in shared environments and exports.
-
-
-    Required headers:
-
-
-    | Header | Value |
-
-    | --- | --- |
-
-    | `X-API-Key` | Your 50-character ASCII alphanumeric API key. |
-
-    | `X-Timestamp` | Current UTC time in `YYYY-MM-DDTHH:mm:ssZ` format. |
-
-    | `X-Nonce` | A fresh UUID v4 for every request, including retries. |
-
-    | `X-Signature` | Base64-encoded HMAC-SHA256 of the canonical request. |
-
-
-    ### Use with Postman
-
-
-    Import the collection; no separate environment is required. Set the collection variables `apiKey` and `apiSecret` locally,
-    leaving their shared values empty, and keep requests set to **Inherit auth from parent**. The collection configures API
-    Key authentication with header `X-API-Key`. Its pre-request script also generates the mandatory timestamp, nonce and HMAC
-    signature.
-
-
-    The script substitutes variables in the raw JSON before signing, preserving whitespace and field order. The examples use
-    fictitious values. If your account has an IP whitelist, requests must originate from an allowed IP address.
-
-
-    Request examples show all four authentication headers. The signer generates `apiTimestamp`, `apiNonce` and `apiSignature`
-    as local, request-scoped variables; do not fill or share them manually. Published cURL placeholders are not usable credentials
-    or signatures. Outside Postman, calculate a fresh signature for the exact request as described below.
-
-
-    ### Sign requests outside Postman
-
-
-    Signature is Base64 of HMAC-SHA256. **Base64 text representing 32 random bytes; use that text as the UTF-8 HMAC key, without
-    Base64 decoding.**
-
-
-    Canonical UTF-8 text uses LF separators with **no final LF**:
-
-
-    ```text
-
-    METHOD
-
-    PATH
-
-    CANONICAL_QUERY
-
-    TIMESTAMP
-
-    NONCE
-
-    SHA256_RAW_BODY_HEX
-
-    API_KEY
-
-    ```
-
-
-    METHOD is uppercase; PATH is the exact public `/api/v2/command` path. Decode once; reject invalid percent/UTF-8 encoding
-    and duplicate decoded keys; RFC3986 encode and sort encoded keys; space is %20. The query line is empty without filters.
-    Hash the exact transmitted raw body bytes as lowercase SHA-256 hex; GET hashes the empty body. Timestamp: UTC YYYY-MM-DDTHH:mm:ssZ;
-    nonce: UUID v4.
-
-
-    The timestamp must be within five minutes of the server clock. A nonce cannot be reused. Invalid or expired authentication
-    returns HTTP 401.
-
-
-    Generated code snippets containing only `X-API-Key` are incomplete: clients outside Postman must also implement HMAC signing.
-
-
-    ## Rate Limit
-
-
-    The API rate limit is **100 requests per minute**, the same as API v1. If you need a higher limit, contact [Hostkit support](https://hostkit.pt/suporte/).
-    Avoid repeated polling and uncontrolled parallel requests; reuse previously retrieved data where appropriate.
-
-
-    If you receive HTTP 429 from the gateway, wait for the period indicated by `Retry-After`, when present, before retrying.
-    Otherwise use exponential backoff with jitter. Every retry must have a fresh timestamp, nonce and signature. Confirm the
-    outcome of write requests before retrying; repeated writes can create duplicates.
-
-
-    Request size, batch size and pagination limits are documented below and are separate from request frequency limits.
-
-
-    ## Requests
-
-
-    GET reads data using URL query parameters, without a body. POST creates, PATCH edits and DELETE deletes using a UTF-8
-    JSON object body, with no business query parameters. The maximum raw body size is **8192 bytes**. Unknown fields and duplicate
-    query parameters are rejected.
-
-
-    IDs, years and months are integers. Money is decimal text. Write booleans are JSON `true` or `false`; GET booleans use
-    exactly `true` or `false`. GET integers use plain decimal text without fractions or exponent notation. Omitted update
-    fields are preserved.
-
-
-    An API key identifies one account. Property operations require `apid` belonging to that account. Fiscal operations require
-    an authorized `invoicing_nif`; reservation references also require `apid`. Available operations depend on your account
-    permissions, license and enabled modules.
-
-
-    `addExpense` and `addInvoice` accept optional atomic batches of lines; `addInvoiceLines` adds a batch to an existing draft.
-    Batches contain at most 20 lines and must fit the body size limit. Invoice closing is always explicit.
-
-
-    ### Reservation filters
-
-
-    Identity and list filters cannot be combined: rcode/CM selectors reject from_date, to_date, reservation_date, date_filter,
-    room, provider, language and nif rather than ignoring them. Invalid combinations return HTTP 422. Incomplete or conflicting
-    channel-manager selectors are also rejected.
-
-
-    Date listing intersects supplied filters; it is not an overlap search. Without `date_filter`, `from_date` constrains check-in
-    and `to_date` constrains checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`, both boundaries apply
-    to that date and include the selected end day.
-
-
-    ### Retries
-
-
-    The API does not deduplicate write requests or replay stored responses. After a timeout or uncertain result, check application
-    state before retrying a write. Repeating a creation request can create another resource. Each retry requires a fresh timestamp,
-    nonce and signature.
-
-
-    ## Key permissions
-
-
-    Accounts may have up to five API keys, each with read-only or read/write access. Every key can read; write access is optional
-    and new keys default to read-only. There are no write-only keys. Keys exist until deleted; deleting a key frees a slot.
-    GET operations require read, except getKeycode which can create a lock code and requires write. POST/PATCH/DELETE require
-    write. Missing permission returns HTTP 403 permission_denied before dispatch. IP whitelist rules remain account-wide.
-
-
-    ## Responses
-
-
-    Successful responses contain `status: "success"`, `data` and `meta.request_id`. Each documented response data schema describes
-    `data`, not the envelope root. POST `add*` operations return HTTP 201; other successful operations return HTTP 200.
-
-
-    No cursor pagination is provided. City-tax declarations and service users support their documented `limit` and `offset`
-    parameters.
-
-
-    ## Errors
-
-
-    Errors contain `status: "failure"`, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP
-    errors include 400, 401, 403, 404, 405, 409, 413, 415, 422, 500, 501 and 503. Responses use `Cache-Control: no-store`
-    and `X-Request-ID`.
-
-
-    | HTTP status | Description |
-
-    | --- | --- |
-
-    | 400 | Invalid request or business selector. |
-
-    | 401 | Missing, invalid, expired or replayed authentication. |
-
-    | 403 | API key read/write permission, account/property/NIF authorization, license, module or IP restriction. |
-
-    | 404 | Operation or resource not found. |
-
-    | 405 | Incorrect HTTP method; Allow identifies the required method. |
-
-    | 409 | Identity, shared-profile or resource-state conflict. |
-
-    | 413 | Raw body exceeds 8192 bytes, or inline city-tax documents exceed the response limit. |
-
-    | 415 | Unsupported request media type. |
-
-    | 422 | Typed schema validation failed. |
-
-    | 500 | Internal error; internal details are not exposed. |
-
-    | 501 | Requested source capability is unsupported, including remote iTaxas PDF delivery. |
-
-    | 503 | Required handler, contract, transactional table or service is unavailable. |
-
-    | 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance. |
-
-
-    ```json
-
-    {"status":"failure","error":{"code":"permission_denied","message":"API key does not have the required permission"},"meta":{"request_id":"example-request-id"}}
-
-    ```
-
-
-    ## Enumerations
-
-
-    Send these request values exactly as listed. Defaults and required fields remain defined by each endpoint.
-
-
-    ### Properties license types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `RNAL` | Short-term rental |
-
-    | `RNET` | Touristic development |
-
-    | `RRAL` | Regional short-term rental |
-
-
-    ### Properties typologies
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `T0` | Studio |
-
-    | `T1` | 1 bedroom |
-
-    | `T2` | 2 bedrooms |
-
-    | `T3` | 3 bedrooms |
-
-    | `T4` | 4 bedrooms |
-
-    | `T5` | 5 bedrooms |
-
-    | `T6` | 6 bedrooms |
-
-    | `NA` | Other |
-
-
-    ### Reservation date filters
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `checkin` | Check-in date |
-
-    | `checkout` | Checkout date |
-
-
-    ### Guest document types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `P` | Passport |
-
-    | `B` | Identity card |
-
-    | `ID` | Identity card |
-
-    | `BI` | Identity card |
-
-    | `O` | Other |
-
-    | `Passaporte` | Passport |
-
-    | `Passport` | Passport |
-
-    | `Outro` | Other |
-
-    | `Other` | Other |
-
-
-    ### Product and reservation extra types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `S` | Service |
-
-    | `P` | Product |
-
-    | `I` | Tax |
-
-
-    ### Smartlock providers
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `nuki` | Nuki |
-
-    | `homeit` | Homeit |
-
-    | `ttlock` | TTLock |
-
-    | `salto` | Salto |
-
-    | `omnitec` | Omnitec |
-
-    | `voyager` | Voyager |
-
-    | `tedee` | Tedee |
-
-    | `assa_abloy` | ASSA ABLOY |
-
-
-    ### Expense documents
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `invoice` | Invoice |
-
-    | `cnote` | Credit note |
-
-
-    ### Expense types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `fixed` | Fixed expense |
-
-    | `variable` | Variable expense |
-
-
-    ### Invoice types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `FR` | Invoice-receipt |
-
-    | `FT` | Invoice |
-
-
-    ### Series document types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `FR` | Invoice-receipt |
-
-    | `FT` | Invoice |
-
-    | `RG` | Receipt |
-
-
-    ### Fiscal regions
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `PT` | Portugal mainland |
-
-    | `PT-MA` | Madeira |
-
-    | `PT-AC` | Azores |
-
-
-    ### Rental contract types
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `ARREND` | Lease |
-
-    | `SUBARR` | Sublease |
-
-    | `PROMES` | Promise to lease |
-
-    | `CEDENC` | Assignment of use |
-
-    | `ALUGUE` | Machinery rental |
-
-
-    ### Rental contract purposes
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `H_PERM` | Permanent housing |
-
-    | `H_NPER` | Non-permanent housing |
-
-    | `N_HABI` | Non-residential |
-
-
-    ### Rent periods
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `MENSAL` | Monthly |
-
-    | `MENORM` | Less than one month |
-
-
-    ### City tax sources
-
-
-    | Value | Description |
-
-    | --- | --- |
-
-    | `tmtai` | Hostkit City Tax |
-
-    | `itaxas` | iTaxas |
-
-
-    ## Changelog
-
-
-    ### 2.0.0
-
-
-    - Account-wide API keys with mandatory HMAC-SHA256 authentication and read-only or read/write permissions. Existing account
-    IP whitelist rules also apply to v2.
-
-    - GET query filters for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain write outcomes before
-    retrying; repeated writes are not deduplicated.
-
-    - Consolidated reads: `getReservations` can select one reservation; `getProperties` can select one property. Expenses,
-    invoices, credit notes, receipts and rental contracts support individual selectors.
-
-    - Invoicing configuration, series, products and Modelo 30 operations; service-user creation and updates.
-
-    - `getCityTaxDeclarations` includes a local PDF as Base64 in `document`, or null when unavailable; there is no separate
-    document endpoint.
-
-    - Mintlify reference, downloadable Postman collection with automatic HMAC signing, cURL examples and Markdown documentation
-    for LLMs.
-
-
-    API v1 remains separate and available; v2 does not change the v1 request format.
-
-    '
+  description: "# Hostkit API v2\n\nOur REST based API allows you to get access to the Hostkit application. On this page we\
+    \ explain you a little bit more detailed what you need for your use case as a host.\n\nPlease [contact us](https://hostkit.pt/suporte/)\
+    \ before you start coding. Tell us a few words about your ideas and plans. We are always happy to help our customers and\
+    \ partners to build the best integrated applications.\n\nIf you have any questions about our API, please feel free to\
+    \ open a ticket in our [Helpdesk](https://hostkit.pt/suporte/).\n\nFor agents/LLMs, use the API v2 Markdown references\
+    \ and downloadable Postman collection.\n\n**WARNING:** Be very careful when using AI-generated or \"vibe-coded\" integrations.\
+    \ Hostkit is not responsible for API misuse, incorrect implementations, or unintended actions caused by third-party code.\n\
+    \nBase URL: `https://app.hostkit.pt/api/v2`\n\n## Authentication\n\nEvery request requires an API key and an HMAC-SHA256\
+    \ signature. An API key alone is not sufficient.\n\nCreate your credentials in Hostkit My Account. Store the API key and\
+    \ the HMAC secret securely; the secret is shown only when the key is created. Never put credentials in URLs or request\
+    \ bodies, or include them in shared environments and exports.\n\nRequired headers:\n\n| Header | Value |\n| --- | ---\
+    \ |\n| `X-API-Key` | Your 50-character ASCII alphanumeric API key. |\n| `X-Timestamp` | Current UTC time in `YYYY-MM-DDTHH:mm:ssZ`\
+    \ format. |\n| `X-Nonce` | A fresh UUID v4 for every request, including retries. |\n| `X-Signature` | Base64-encoded HMAC-SHA256\
+    \ of the canonical request. |\n\n### Use with Postman\n\nImport the collection; no separate environment is required. Set\
+    \ the collection variables `apiKey` and `apiSecret` locally, leaving their shared values empty, and keep requests set\
+    \ to **Inherit auth from parent**. The collection configures API Key authentication with header `X-API-Key`. Its pre-request\
+    \ script also generates the mandatory timestamp, nonce and HMAC signature.\n\nThe script substitutes variables in the\
+    \ raw JSON before signing, preserving whitespace and field order. The examples use fictitious values. If your account\
+    \ has an IP whitelist, requests must originate from an allowed IP address.\n\nRequest examples show all four authentication\
+    \ headers. The signer generates `apiTimestamp`, `apiNonce` and `apiSignature` as local, request-scoped variables; do not\
+    \ fill or share them manually. Published cURL placeholders are not usable credentials or signatures. Outside Postman,\
+    \ calculate a fresh signature for the exact request as described below.\n\n### Sign requests outside Postman\n\nSignature\
+    \ is Base64 of HMAC-SHA256. **Base64 text representing 32 random bytes; use that text as the UTF-8 HMAC key, without Base64\
+    \ decoding.**\n\nCanonical UTF-8 text uses LF separators with **no final LF**:\n\n```text\nMETHOD\nPATH\nCANONICAL_QUERY\n\
+    TIMESTAMP\nNONCE\nSHA256_RAW_BODY_HEX\nAPI_KEY\n```\n\nMETHOD is uppercase; PATH is the exact public `/api/v2/command`\
+    \ path. Decode once; reject invalid percent/UTF-8 encoding and duplicate decoded keys; RFC3986 encode and sort encoded\
+    \ keys; space is %20. The query line is empty without filters. Hash the exact transmitted raw body bytes as lowercase\
+    \ SHA-256 hex; GET hashes the empty body. Timestamp: UTC YYYY-MM-DDTHH:mm:ssZ; nonce: UUID v4.\n\nThe timestamp must be\
+    \ within five minutes of the server clock. A nonce cannot be reused. Invalid or expired authentication returns HTTP 401.\n\
+    \nGenerated code snippets containing only `X-API-Key` are incomplete: clients outside Postman must also implement HMAC\
+    \ signing.\n\n## Rate Limit\n\nThe API rate limit is **100 requests per minute**, the same as API v1. If you need a higher\
+    \ limit, contact [Hostkit support](https://hostkit.pt/suporte/). Avoid repeated polling and uncontrolled parallel requests;\
+    \ reuse previously retrieved data where appropriate.\n\nIf you receive HTTP 429 from the gateway, wait for the period\
+    \ indicated by `Retry-After`, when present, before retrying. Otherwise use exponential backoff with jitter. Every retry\
+    \ must have a fresh timestamp, nonce and signature. Confirm the outcome of write requests before retrying; repeated writes\
+    \ can create duplicates.\n\nRequest size, batch size and pagination limits are documented below and are separate from\
+    \ request frequency limits.\n\n## Requests\n\nGET reads data using URL query parameters, without a body. POST creates,\
+    \ PATCH edits and DELETE deletes using a UTF-8 JSON object body, with no business query parameters. The maximum raw body\
+    \ size is **8192 bytes**. Unknown fields and duplicate query parameters are rejected.\n\nIDs, years and months are integers.\
+    \ Money is decimal text. Write booleans are JSON `true` or `false`; GET booleans use exactly `true` or `false`. GET integers\
+    \ use plain decimal text without fractions or exponent notation. Omitted update fields are preserved.\n\nAn API key identifies\
+    \ one account. Property operations require `apid` belonging to that account. Fiscal operations require an authorized `invoicing_nif`;\
+    \ reservation references also require `apid`. Available operations depend on your account permissions, license and enabled\
+    \ modules.\n\n`addExpense` and `addInvoice` accept optional atomic batches of lines; `addInvoiceLines` adds a batch to\
+    \ an existing draft. Batches contain at most 20 lines and must fit the body size limit. Invoice closing is always explicit.\n\
+    \n### Reservation filters\n\nIdentity and list filters cannot be combined: rcode/CM selectors reject from_date, to_date,\
+    \ reservation_date, date_filter, room, provider, language and nif rather than ignoring them. Invalid combinations return\
+    \ HTTP 422. Incomplete or conflicting channel-manager selectors are also rejected.\n\nDate listing intersects supplied\
+    \ filters; it is not an overlap search. Without `date_filter`, `from_date` constrains check-in and `to_date` constrains\
+    \ checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`, both boundaries apply to that date and include\
+    \ the selected end day.\n\n### Retries\n\nThe API does not deduplicate write requests or replay stored responses. After\
+    \ a timeout or uncertain result, check application state before retrying a write. Repeating a creation request can create\
+    \ another resource. Each retry requires a fresh timestamp, nonce and signature.\n\n## Key permissions\n\nAccounts may\
+    \ have up to five API keys, each with read-only or read/write access. Every key can read; write access is optional and\
+    \ new keys default to read-only. There are no write-only keys. Keys exist until deleted; deleting a key frees a slot.\
+    \ GET operations require read, except getKeycode which can create a lock code and requires write. POST/PATCH/DELETE require\
+    \ write. Missing permission returns HTTP 403 permission_denied before dispatch. IP whitelist rules remain account-wide.\n\
+    \n## Responses\n\nSuccessful responses contain `status: \"success\"`, `data` and `meta.request_id`. Each documented response\
+    \ data schema describes `data`, not the envelope root. POST `add*` operations return HTTP 201; other successful operations\
+    \ return HTTP 200.\n\nNo cursor pagination is provided. City-tax declarations and service users support their documented\
+    \ `limit` and `offset` parameters.\n\n## Errors\n\nErrors contain `status: \"failure\"`, `error.code`, `error.message`,\
+    \ optional `error.field` and `meta.request_id`. HTTP errors include 400, 401, 403, 404, 405, 409, 413, 415, 422, 500,\
+    \ 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\n| HTTP status | Description |\n| --- | ---\
+    \ |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid, expired or replayed authentication. |\n\
+    | 403 | API key read/write permission, account/property/NIF authorization, license, module or IP restriction. |\n| 404\
+    \ | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies the required method. |\n| 409\
+    \ | Identity, shared-profile or resource-state conflict. |\n| 413 | Raw body exceeds 8192 bytes, or inline city-tax documents\
+    \ exceed the response limit. |\n| 415 | Unsupported request media type. |\n| 422 | Typed schema validation failed. |\n\
+    | 500 | Internal error; internal details are not exposed. |\n| 501 | Requested source capability is unsupported, including\
+    \ remote iTaxas PDF delivery. |\n| 503 | Required handler, contract, transactional table or service is unavailable. |\n\
+    | 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance. |\n\n```json\n{\"status\":\"failure\"\
+    ,\"error\":{\"code\":\"permission_denied\",\"message\":\"API key does not have the required permission\"},\"meta\":{\"\
+    request_id\":\"example-request-id\"}}\n```\n\n## Enumerations\n\nSend these request values exactly as listed. Defaults\
+    \ and required fields remain defined by each endpoint.\n\n### Properties license types\n\n| Value | Description |\n| ---\
+    \ | --- |\n| `RNAL` | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL` | Regional short-term rental |\n\
+    \n### Properties typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio |\n| `T1` | 1 bedroom |\n| `T2`\
+    \ | 2 bedrooms |\n| `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n| `T6` | 6 bedrooms |\n| `NA` |\
+    \ Other |\n\n### Reservation date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin` | Check-in date |\n|\
+    \ `checkout` | Checkout date |\n\n### Guest document types\n\n| Value | Description |\n| --- | --- |\n| `P` | Passport\
+    \ |\n| `B` | Identity card |\n| `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n| `Passaporte` | Passport\
+    \ |\n| `Passport` | Passport |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation extra types\n\n\
+    | Value | Description |\n| --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock providers\n\
+    \n| Value | Description |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n| `salto` |\
+    \ Salto |\n| `omnitec` | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY |\n\n###\
+    \ Expense documents\n\n| Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note |\n\n\
+    ### Expense types\n\n| Value | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable expense\
+    \ |\n\n### Invoice types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n\n\
+    ### Series document types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n\
+    | `RG` | Receipt |\n\n### Fiscal regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n| `PT-MA`\
+    \ | Madeira |\n| `PT-AC` | Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n| `ARREND`\
+    \ | Lease |\n| `SUBARR` | Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE` |\
+    \ Machinery rental |\n\n### Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent\
+    \ housing |\n| `H_NPER` | Non-permanent housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description\
+    \ |\n| --- | --- |\n| `MENSAL` | Monthly |\n| `MENORM` | Less than one month |\n\n### City tax sources\n\n| Value | Description\
+    \ |\n| --- | --- |\n| `tmtai` | Hostkit City Tax |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\
+    \n| Value |\n| --- |\n| `9flats` |\n| `abreu` |\n| `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago`\
+    \ |\n| `atraveo` |\n| `belvilla` |\n| `blueground` |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info`\
+    \ |\n| `campspace` |\n| `clickstay` |\n| `corporate` |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n\
+    | `edreams` |\n| `email` |\n| `eurofun` |\n| `eurohike` |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com`\
+    \ |\n| `google` |\n| `hometogo` |\n| `hostelworld` |\n| `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip`\
+    \ |\n| `hrs` |\n| `inntravel` |\n| `jetcamp` |\n| `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere`\
+    \ |\n| `muchosol` |\n| `mycamper` |\n| `odisseias` |\n| `olimar` |\n| `oliverstravels` |\n| `oyo` |\n| `phone` |\n| `pincamp`\
+    \ |\n| `pitchup` |\n| `plumguide` |\n| `profitroom` |\n| `roomarama` |\n| `scapetravel` |\n| `seabreeze` |\n| `solmar`\
+    \ |\n| `spotahome` |\n| `splvillas` |\n| `stsurleshauteurs` |\n| `traum` |\n| `travelagency` |\n| `travelagent` |\n| `travelstaytion`\
+    \ |\n| `trip.com` |\n| `tripadvisor` |\n| `uniplaces` |\n| `villacollection` |\n| `villamore` |\n| `villaplus` |\n| `vintage`\
+    \ |\n| `vistaverde` |\n| `voucher` |\n| `vrbo` |\n| `walkin` |\n| `website` |\n| `wolters` |\n| `wix` |\n\n### Invoices\
+    \ sources\n\n| Value | Description |\n| --- | --- |\n| `api` | API invoices (faturas via API) |\n| `automatic` | Automatic\
+    \ invoices (faturas autom\xE1ticas) |\n| `bulk` | Bulk invoices (faturas geradas em massa) |\n| `pmc` | Property management\
+    \ invoices (faturas de comiss\xF5es de gest\xE3o) |\n| `manual` | Manual invoices (faturas manuais) |\n\n### Invoices\
+    \ payment methods\n\n| Value | Description |\n| --- | --- |\n| `CC` | Credit card (Cart\xE3o cr\xE9dito) |\n| `CD` | Debit\
+    \ card (Cart\xE3o d\xE9bito) |\n| `CH` | Bank check (Cheque banc\xE1rio) |\n| `CI` | International documentary credit\
+    \ (Cr\xE9dito document\xE1rio internacional) |\n| `CO` | Cheque or gift card (Cheque ou cart\xE3o oferta) |\n| `CS` |\
+    \ Clearing of current account balances (Compensa\xE7\xE3o de saldos em conta corrente) |\n| `DE` | Electronic money (Dinheiro\
+    \ eletr\xF3nico) |\n| `LC` | Commercial bills (Letra comercial) |\n| `MB` | ATM (Multibanco) |\n| `NU` | Cash (Numer\xE1\
+    rio) |\n| `PR` | Exchange of goods (Permuta de bens) |\n| `TB` | Bank transfer or authorised direct debit (Transfer\xEA\
+    ncia banc\xE1ria ou d\xE9bito direto autorizado) |\n| `OU` | Other means not listed here (Outros meios aqui n\xE3o assinalados)\
+    \ |\n\n### Invoicing product VAT exemption codes\n\n| Value | Description |\n| --- | --- |\n| `M01` | Article 16, nr.\
+    \ 6 of CIVA (Artigo 16.\xBA n.\xBA 6 do CIVA) |\n| `M02` | Article 6 of Decree-Law 198/90 of 19 June (Artigo 6.\xBA do\
+    \ Decreto-Lei n.\xBA 198/90, de 19 de Junho) |\n| `M03` | Cash requirement (Exigibilidade de caixa) |\n| `M04` | Exempt\
+    \ Article 13 of CIVA (Isento Artigo 13.\xBA do CIVA) |\n| `M05` | Exempt Article 14 of CIVA (Isento Artigo 14.\xBA do\
+    \ CIVA) |\n| `M06` | Exempt Article 15 of CIVA (Isento Artigo 15.\xBA do CIVA) |\n| `M07` | Exempt Article 9 of CIVA (Isento\
+    \ Artigo 9.\xBA do CIVA) |\n| `M09` | VAT no right to deduction (IVA n\xE3o confere direito a dedu\xE7\xE3o) |\n| `M10`\
+    \ | VAT exemption scheme (IVA regime de isen\xE7\xE3o) |\n| `M11` | Special tobacco regime (Regime particular do tabaco)\
+    \ |\n| `M12` | Profit margin scheme, travel agencies (Regime da margem de lucro, ag\xEAncias de viagens) |\n| `M13` |\
+    \ Profit margin scheme, second-hand goods (Regime da margem de lucro, bens em segunda m\xE3o) |\n| `M14` | Profit margin\
+    \ scheme, works of art (Regime da margem de lucro, objectos de arte) |\n| `M15` | Profit margin scheme, collectors' items\
+    \ and antiques (Regime da margem de lucro, objectos de colec\xE7\xE3o e antiguidades) |\n| `M16` | Exempt Article 14 of\
+    \ the RITI (Isento Artigo 14.\xBA do RITI) |\n| `M19` | Other exemptions (Outras isen\xE7\xF5es) |\n| `M20` | VAT flat-rate\
+    \ scheme (IVA regime forfet\xE1rio) |\n| `M21` | VAT no right to deduction or similar expression (IVA n\xE3o confere direito\
+    \ \xE0 dedu\xE7\xE3o ou express\xE3o similar) |\n| `M25` | Goods on consignment (Mercadorias \xE0 consigna\xE7\xE3o) |\n\
+    | `M26` | VAT exemption with right of deduction on food baskets (Isen\xE7\xE3o de IVA com direito \xE0 dedu\xE7\xE3o no\
+    \ cabaz alimentar) |\n| `M30` | VAT reverse charge, Article 2, nr. 1, line i of CIVA (IVA autoliquida\xE7\xE3o, Artigo\
+    \ 2.\xBA n.\xBA 1 al\xEDnea i do CIVA) |\n| `M31` | VAT reverse charge, Article 2, nr. 1, line j of CIVA (IVA autoliquida\xE7\
+    \xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea j do CIVA) |\n| `M32` | VAT reverse charge, Article 2, nr. 1, line l of CIVA (IVA\
+    \ autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea l do CIVA) |\n| `M33` | VAT reverse charge, Article 2, nr. 1,\
+    \ line m of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea m do CIVA) |\n| `M34` | VAT reverse charge,\
+    \ Article 2, nr. 1, line n of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea n do CIVA) |\n| `M40` |\
+    \ VAT reverse charge, Article 6, nr. 6, line a of CIVA to the contrary (IVA autoliquida\xE7\xE3o, Artigo 6.\xBA n.\xBA\
+    \ 6 al\xEDnea a do CIVA, a contr\xE1rio) |\n| `M41` | VAT reverse charge, Article 8, nr. 3 of CIVA (IVA autoliquida\xE7\
+    \xE3o, Artigo 8.\xBA n.\xBA 3 do CIVA) |\n| `M42` | VAT reverse charge, Decree-Law no. 21/2007, of 29 January (IVA autoliquida\xE7\
+    \xE3o, Decreto-Lei n.\xBA 21/2007, de 29 de janeiro) |\n| `M43` | VAT reverse charge, Decree-Law no. 362/99, of 16th September\
+    \ (IVA autoliquida\xE7\xE3o, Decreto-Lei n.\xBA 362/99, de 16 de setembro) |\n| `M44` | Specific Rules, Article 6 of RITI\
+    \ (Regras espec\xEDficas, artigo 6.\xBA do CIVA) |\n| `M45` | Cross-border exemption scheme (Regime transfronteiri\xE7\
+    o de isen\xE7\xE3o) |\n| `M46` | e-TaxFree |\n| `M99` | Not subject, not taxed (N\xE3o sujeito, n\xE3o tributado) |\n\n\
+    ### Expenses categories\n\n| Value | Description |\n| --- | --- |\n| `1` | Consumables (Consum\xEDveis) |\n| `2` | Decoration\
+    \ (Decora\xE7\xE3o) |\n| `3` | Electronics (Eletr\xF3nica) |\n| `4` | Furniture (Mobili\xE1rio) |\n| `5` | Government\
+    \ (Governo) |\n| `6` | Hardware (Ferramentas) |\n| `7` | Laundry (Lavandaria) |\n| `8` | Textiles (T\xEAxteis) |\n| `9`\
+    \ | Maintenance (Manuten\xE7\xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xED\
+    lios) |\n| `13` | Utilities (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos)\
+    \ |\n| `16` | Legal (Jur\xEDdico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1\
+    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2.0.0\n\n- Account-wide API keys\
+    \ with mandatory HMAC-SHA256 authentication and read-only or read/write permissions. Existing account IP whitelist rules\
+    \ also apply to v2.\n- GET query filters for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain\
+    \ write outcomes before retrying; repeated writes are not deduplicated.\n- Consolidated reads: `getReservations` can select\
+    \ one reservation; `getProperties` can select one property. Expenses, invoices, credit notes, receipts and rental contracts\
+    \ support individual selectors.\n- Invoicing configuration, series, products and Modelo 30 operations; service-user creation\
+    \ and updates.\n- `getCityTaxDeclarations` includes a local PDF as Base64 in `document`, or null when unavailable; there\
+    \ is no separate document endpoint.\n- Mintlify reference, downloadable Postman collection with automatic HMAC signing,\
+    \ cURL examples and Markdown documentation for LLMs.\n\nAPI v1 remains separate and available; v2 does not change the\
+    \ v1 request format.\n"
   schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 auth:
   type: apikey
