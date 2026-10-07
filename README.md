@@ -16,4 +16,6 @@ The collection generates a fresh timestamp, nonce and HMAC signature before each
 
 Never commit or share real credentials. Review write operations before sending them; do not retry uncertain creations without checking the result.
 
-For authentication, endpoints and troubleshooting, see the [Postman guide](https://docs.hostkit.pt/postman).
+## Disclaimer
+
+Hostkit is not responsible for API misuse, incorrect implementations or unintended actions caused by third-party code.
