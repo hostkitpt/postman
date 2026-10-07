@@ -1,749 +1,4131 @@
 info:
-  name: Hostkit API
-  schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
-  description: Public Hostkit API collection for Postman.
+  name: Hostkit API v2
+  description: '# Hostkit API v2
 
+
+    Our REST based API allows you to get access to the Hostkit application. On this page we explain you a little bit more
+    detailed what you need for your use case as a host.
+
+
+    Please [contact us](https://hostkit.pt/suporte/) before you start coding. Tell us a few words about your ideas and plans.
+    We are always happy to help our customers and partners to build the best integrated applications.
+
+
+    If you have any questions about our API, please feel free to open a ticket in our [Helpdesk](https://hostkit.pt/suporte/).
+
+
+    For agents/LLMs, use the API v2 Markdown references and downloadable Postman collection.
+
+
+    **WARNING:** Be very careful when using AI-generated or "vibe-coded" integrations. Hostkit is not responsible for API
+    misuse, incorrect implementations, or unintended actions caused by third-party code.
+
+
+    Base URL: `https://app.hostkit.pt/api/v2`
+
+
+    ## Authentication
+
+
+    Every request requires an API key and an HMAC-SHA256 signature. An API key alone is not sufficient.
+
+
+    Create your credentials in Hostkit My Account. Store the API key and the HMAC secret securely; the secret is shown only
+    when the key is created. Never put credentials in URLs or request bodies, or include them in shared environments and exports.
+
+
+    Required headers:
+
+
+    | Header | Value |
+
+    | --- | --- |
+
+    | `X-API-Key` | Your 50-character ASCII alphanumeric API key. |
+
+    | `X-Timestamp` | Current UTC time in `YYYY-MM-DDTHH:mm:ssZ` format. |
+
+    | `X-Nonce` | A fresh UUID v4 for every request, including retries. |
+
+    | `X-Signature` | Base64-encoded HMAC-SHA256 of the canonical request. |
+
+
+    ### Use with Postman
+
+
+    Import the collection and the **Hostkit API v2** environment. Set `apiKey` and `apiSecret` locally, leaving their shared
+    values empty, and keep requests set to **Inherit auth from parent**. The collection configures API Key authentication
+    with header `X-API-Key`. Its pre-request script also generates the mandatory timestamp, nonce and HMAC signature.
+
+
+    The script substitutes variables in the raw JSON before signing, preserving whitespace and field order. The examples use
+    fictitious values. If your account has an IP whitelist, requests must originate from an allowed IP address.
+
+
+    Request examples show all four authentication headers. The signer generates `apiTimestamp`, `apiNonce` and `apiSignature`
+    as local, request-scoped variables; do not fill or share them manually. Published cURL placeholders are not usable credentials
+    or signatures. Outside Postman, calculate a fresh signature for the exact request as described below.
+
+
+    ### Sign requests outside Postman
+
+
+    Signature is Base64 of HMAC-SHA256. **Base64 text representing 32 random bytes; use that text as the UTF-8 HMAC key, without
+    Base64 decoding.**
+
+
+    Canonical UTF-8 text uses LF separators with **no final LF**:
+
+
+    ```text
+
+    METHOD
+
+    PATH
+
+    CANONICAL_QUERY
+
+    TIMESTAMP
+
+    NONCE
+
+    SHA256_RAW_BODY_HEX
+
+    API_KEY
+
+    ```
+
+
+    METHOD is uppercase; PATH is the exact public `/api/v2/command` path. Decode once; reject invalid percent/UTF-8 encoding
+    and duplicate decoded keys; RFC3986 encode and sort encoded keys; space is %20. The query line is empty without filters.
+    Hash the exact transmitted raw body bytes as lowercase SHA-256 hex; GET hashes the empty body. Timestamp: UTC YYYY-MM-DDTHH:mm:ssZ;
+    nonce: UUID v4.
+
+
+    The timestamp must be within five minutes of the server clock. A nonce cannot be reused. Invalid or expired authentication
+    returns HTTP 401.
+
+
+    Generated code snippets containing only `X-API-Key` are incomplete: clients outside Postman must also implement HMAC signing.
+
+
+    ## Rate Limit
+
+
+    The API rate limit is **100 requests per minute**, the same as API v1. If you need a higher limit, contact [Hostkit support](https://hostkit.pt/suporte/).
+    Avoid repeated polling and uncontrolled parallel requests; reuse previously retrieved data where appropriate.
+
+
+    If you receive HTTP 429 from the gateway, wait for the period indicated by `Retry-After`, when present, before retrying.
+    Otherwise use exponential backoff with jitter. Every retry must have a fresh timestamp, nonce and signature. Confirm the
+    outcome of write requests before retrying; repeated writes can create duplicates.
+
+
+    Request size, batch size and pagination limits are documented below and are separate from request frequency limits.
+
+
+    ## Requests
+
+
+    GET reads data using URL query parameters, without a body. POST creates, PATCH edits and DELETE deletes using a UTF-8
+    JSON object body, with no business query parameters. The maximum raw body size is **8192 bytes**. Unknown fields and duplicate
+    query parameters are rejected.
+
+
+    IDs, years and months are integers. Money is decimal text. Write booleans are JSON `true` or `false`; GET booleans use
+    exactly `true` or `false`. GET integers use plain decimal text without fractions or exponent notation. Omitted update
+    fields are preserved.
+
+
+    An API key identifies one account. Property operations require `apid` belonging to that account. Fiscal operations require
+    an authorized `invoicing_nif`; reservation references also require `apid`. Available operations depend on your account
+    permissions, license and enabled modules.
+
+
+    `addExpense` and `addInvoice` accept optional atomic batches of lines; `addInvoiceLines` adds a batch to an existing draft.
+    Batches contain at most 20 lines and must fit the body size limit. Invoice closing is always explicit.
+
+
+    ### Reservation filters
+
+
+    Identity and list filters cannot be combined: rcode/CM selectors reject from_date, to_date, reservation_date, date_filter,
+    room, provider, language and nif rather than ignoring them. Invalid combinations return HTTP 422. Incomplete or conflicting
+    channel-manager selectors are also rejected.
+
+
+    Date listing intersects supplied filters; it is not an overlap search. Without `date_filter`, `from_date` constrains check-in
+    and `to_date` constrains checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`, both boundaries apply
+    to that date and include the selected end day.
+
+
+    ### Retries
+
+
+    The API does not deduplicate write requests or replay stored responses. After a timeout or uncertain result, check application
+    state before retrying a write. Repeating a creation request can create another resource. Each retry requires a fresh timestamp,
+    nonce and signature.
+
+
+    ## Key permissions
+
+
+    Accounts may have up to five API keys, each with read-only or read/write access. Every key can read; write access is optional
+    and new keys default to read-only. There are no write-only keys. Keys exist until deleted; deleting a key frees a slot.
+    GET operations require read, except getKeycode which can create a lock code and requires write. POST/PATCH/DELETE require
+    write. Missing permission returns HTTP 403 permission_denied before dispatch. IP whitelist rules remain account-wide.
+
+
+    ## Responses
+
+
+    Successful responses contain `status: "success"`, `data` and `meta.request_id`. Each documented response data schema describes
+    `data`, not the envelope root. POST `add*` operations return HTTP 201; other successful operations return HTTP 200.
+
+
+    No cursor pagination is provided. City-tax declarations and service users support their documented `limit` and `offset`
+    parameters.
+
+
+    ## Errors
+
+
+    Errors contain `status: "failure"`, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP
+    errors include 400, 401, 403, 404, 405, 409, 413, 415, 422, 500, 501 and 503. Responses use `Cache-Control: no-store`
+    and `X-Request-ID`.
+
+
+    | HTTP status | Description |
+
+    | --- | --- |
+
+    | 400 | Invalid request or business selector. |
+
+    | 401 | Missing, invalid, expired or replayed authentication. |
+
+    | 403 | API key read/write permission, account/property/NIF authorization, license, module or IP restriction. |
+
+    | 404 | Operation or resource not found. |
+
+    | 405 | Incorrect HTTP method; Allow identifies the required method. |
+
+    | 409 | Identity, shared-profile or resource-state conflict. |
+
+    | 413 | Raw body exceeds 8192 bytes, or inline city-tax documents exceed the response limit. |
+
+    | 415 | Unsupported request media type. |
+
+    | 422 | Typed schema validation failed. |
+
+    | 500 | Internal error; internal details are not exposed. |
+
+    | 501 | Requested source capability is unsupported, including remote iTaxas PDF delivery. |
+
+    | 503 | Required handler, contract, transactional table or service is unavailable. |
+
+    | 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance. |
+
+
+    ```json
+
+    {"status":"failure","error":{"code":"permission_denied","message":"API key does not have the required permission"},"meta":{"request_id":"example-request-id"}}
+
+    ```
+
+
+    ## Enumerations
+
+
+    Send these request values exactly as listed. Defaults and required fields remain defined by each endpoint.
+
+
+    ### Properties license types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `RNAL` | Short-term rental |
+
+    | `RNET` | Touristic development |
+
+    | `RRAL` | Regional short-term rental |
+
+
+    ### Properties typologies
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `T0` | Studio |
+
+    | `T1` | 1 bedroom |
+
+    | `T2` | 2 bedrooms |
+
+    | `T3` | 3 bedrooms |
+
+    | `T4` | 4 bedrooms |
+
+    | `T5` | 5 bedrooms |
+
+    | `T6` | 6 bedrooms |
+
+    | `NA` | Other |
+
+
+    ### Reservation date filters
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `checkin` | Check-in date |
+
+    | `checkout` | Checkout date |
+
+
+    ### Guest document types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `P` | Passport |
+
+    | `B` | Identity card |
+
+    | `ID` | Identity card |
+
+    | `BI` | Identity card |
+
+    | `O` | Other |
+
+    | `Passaporte` | Passport |
+
+    | `Passport` | Passport |
+
+    | `Outro` | Other |
+
+    | `Other` | Other |
+
+
+    ### Product and reservation extra types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `S` | Service |
+
+    | `P` | Product |
+
+    | `I` | Tax |
+
+
+    ### Smartlock providers
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `nuki` | Nuki |
+
+    | `homeit` | Homeit |
+
+    | `ttlock` | TTLock |
+
+    | `salto` | Salto |
+
+    | `omnitec` | Omnitec |
+
+    | `voyager` | Voyager |
+
+    | `tedee` | Tedee |
+
+    | `assa_abloy` | ASSA ABLOY |
+
+
+    ### Expense documents
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `invoice` | Invoice |
+
+    | `cnote` | Credit note |
+
+
+    ### Expense types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `fixed` | Fixed expense |
+
+    | `variable` | Variable expense |
+
+
+    ### Invoice types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `FR` | Invoice-receipt |
+
+    | `FT` | Invoice |
+
+
+    ### Series document types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `FR` | Invoice-receipt |
+
+    | `FT` | Invoice |
+
+    | `RG` | Receipt |
+
+
+    ### Fiscal regions
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `PT` | Portugal mainland |
+
+    | `PT-MA` | Madeira |
+
+    | `PT-AC` | Azores |
+
+
+    ### Rental contract types
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `ARREND` | Lease |
+
+    | `SUBARR` | Sublease |
+
+    | `PROMES` | Promise to lease |
+
+    | `CEDENC` | Assignment of use |
+
+    | `ALUGUE` | Machinery rental |
+
+
+    ### Rental contract purposes
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `H_PERM` | Permanent housing |
+
+    | `H_NPER` | Non-permanent housing |
+
+    | `N_HABI` | Non-residential |
+
+
+    ### Rent periods
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `MENSAL` | Monthly |
+
+    | `MENORM` | Less than one month |
+
+
+    ### City tax sources
+
+
+    | Value | Description |
+
+    | --- | --- |
+
+    | `tmtai` | Hostkit City Tax |
+
+    | `itaxas` | iTaxas |
+
+
+    ## Changelog
+
+
+    ### 2.0.0
+
+
+    - Account-wide API keys with mandatory HMAC-SHA256 authentication and read-only or read/write permissions. Existing account
+    IP whitelist rules also apply to v2.
+
+    - GET query filters for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain write outcomes before
+    retrying; repeated writes are not deduplicated.
+
+    - Consolidated reads: `getReservations` can select one reservation; `getProperties` can select one property. Expenses,
+    invoices, credit notes, receipts and rental contracts support individual selectors.
+
+    - Invoicing configuration, series, products and Modelo 30 operations; service-user creation and updates.
+
+    - `getCityTaxDeclarations` includes a local PDF as Base64 in `document`, or null when unavailable; there is no separate
+    document endpoint.
+
+    - Mintlify reference, downloadable Postman collection with automatic HMAC signing, cURL examples and Markdown documentation
+    for LLMs.
+
+
+    API v1 remains separate and available; v2 does not change the v1 request format.
+
+    '
+  schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 auth:
   type: apikey
   apikey:
-    - key: key
-      value: APIKEY
-      type: string
-    - key: value
-      value: "{{APIKEY}}"
-      type: string
-    - key: in
-      value: query
-      type: string
-
+  - key: key
+    value: X-API-Key
+    type: string
+  - key: value
+    value: '{{apiKey}}'
+    type: string
+  - key: in
+    value: header
+    type: string
+protocolProfileBehavior:
+  followRedirects: false
 variable:
-  - key: baseUrl
-    value: https://app.hostkit.pt/api
-  - key: APIKEY
-    value: your-api-key
-
+- key: baseUrl
+  value: https://app.hostkit.pt/api/v2
+- key: apiKey
+  value: ''
+- key: apiSecret
+  value: ''
+  type: string
+event:
+- listen: prerequest
+  script:
+    type: text/javascript
+    exec:
+    - function queryEntries(query) {
+    - '  const raw = typeof query === ''string'' ? query.replace(/^\?/, '''') : query.toString();'
+    - '  if (!raw) return [];'
+    - '  if (raw.length > 4096 || /[^\x00-\x7f]/.test(raw)) throw new Error(''Query must be at most 4096 ASCII bytes; percent-encode
+      UTF-8 values'');'
+    - '  const seen = new Set();'
+    - '  return raw.split(''&'').map((part) => {'
+    - '    const separator = part.indexOf(''='');'
+    - '    if (separator < 1) throw new Error(''Expected a named query parameter'');'
+    - '    const decode = (value) => decodeURIComponent(value.replace(/\+/g, ''%20''));'
+    - '    const key = decode(separator < 0 ? part : part.slice(0, separator));'
+    - '    const value = decode(separator < 0 ? '''' : part.slice(separator + 1));'
+    - '    if (!key || seen.has(key)) throw new Error(''Empty or duplicate query key'');'
+    - '    seen.add(key);'
+    - '    return [key, value];'
+    - '  });'
+    - '}'
+    - ''
+    - function canonicalQuery(query) {
+    - '  const encode = (value) => encodeURIComponent(value).replace(/[!''()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);'
+    - '  return queryEntries(query).map(([key, value]) => [encode(key), encode(value)])'
+    - '    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, value]) => `${key}=${value}`).join(''&'');'
+    - '}'
+    - ''
+    - (function postmanSigner() {
+    - '  const CryptoJS = require(''crypto-js'');'
+    - '  const key = pm.variables.get(''apiKey'');'
+    - '  const secret = pm.variables.get(''apiSecret'');'
+    - '  if (!key || !secret) throw new Error(''Set local apiKey and apiSecret variables'');'
+    - '  const method = pm.request.method.toUpperCase();'
+    - '  const url = pm.variables.replaceIn(pm.request.url.toString());'
+    - '  const match = /^https:\/\/([^/?#]+)(\/[^?#]*)(?:\?([^#]*))?$/.exec(url);'
+    - '  if (!match) throw new Error(''An exact HTTPS URL without fragment is required'');'
+    - '  if (!/^\/api\/v2\/[A-Za-z]+$/.test(match[2])) throw new Error(''Unexpected public v2 path'');'
+    - '  const query = canonicalQuery(match[3] ?? '''');'
+    - '  if (method !== ''GET'' && query) throw new Error(''Write business parameters belong in JSON, not query'');'
+    - '  let body = '''';'
+    - '  if (pm.request.body) {'
+    - '    if (pm.request.body.mode !== ''raw'') throw new Error(''Only raw JSON request bodies are supported'');'
+    - '    body = pm.variables.replaceIn(pm.request.body.raw ?? '''');'
+    - '    if (method === ''GET'' && body) throw new Error(''GET must not carry a body'');'
+    - '    pm.request.body.raw = body;'
+    - '  }'
+    - '  if (method !== ''GET'') {'
+    - '    const value = JSON.parse(body);'
+    - '    if (!value || typeof value !== ''object'' || Array.isArray(value)) throw new Error(''Body must be a JSON object'');'
+    - '    // UTF-8 byte count, not JavaScript character count; no reserialization.'
+    - '    if (unescape(encodeURIComponent(body)).length > 8192) throw new Error(''Body exceeds 8192 UTF-8 bytes'');'
+    - '    pm.request.headers.upsert({ key: ''Content-Type'', value: ''application/json'' });'
+    - '  }'
+    - '  const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, ''Z'');'
+    - '  const nonce = pm.variables.replaceIn(''{{$guid}}'');'
+    - '  const digest = CryptoJS.SHA256(body).toString(CryptoJS.enc.Hex);'
+    - '  const canonical = [method, match[2], query, timestamp, nonce, digest, key].join(''\n'');'
+    - '  // apiSecret is Base64 TEXT used as the UTF-8 key, never Base64-decoded.'
+    - '  const signature = CryptoJS.HmacSHA256(canonical, secret).toString(CryptoJS.enc.Base64);'
+    - '  pm.variables.set(''apiTimestamp'', timestamp);'
+    - '  pm.variables.set(''apiNonce'', nonce);'
+    - '  pm.variables.set(''apiSignature'', signature);'
+    - '  for (const [key, value] of Object.entries({ ''X-API-Key'': pm.variables.get(''apiKey''), ''X-Timestamp'': timestamp,
+      ''X-Nonce'': nonce, ''X-Signature'': signature })) {'
+    - '    pm.request.headers.upsert({ key, value });'
+    - '  }'
+    - '})();'
 item:
-  - name: Account
+- name: Account
+  description: Account license and expiration.
+  item:
+  - name: getLicense
+    request:
+      method: GET
+      description: 'Read account license plan and expiration.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        '
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getLicense'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getLicense
+    response: []
+- name: Properties
+  description: Account properties and property details.
+  item:
+  - name: getProperties
+    request:
+      method: GET
+      description: 'Discover account properties, or filter the detail by apid.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | No | Property ID belonging to the authenticated account.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getProperties'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getProperties
+    response: []
+  - name: addProperty
+    request:
+      method: POST
+      description: 'Create an initially inactive property.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `property_name` | string | Yes | Property name. minLength: 1 |
+
+        | `address` | string | Yes | Street address. minLength: 1 |
+
+        | `zip` | string | Yes | Portuguese postal code. pattern: "^[0-9]{4}-[0-9]{3}$" |
+
+        | `city` | string | Yes | City. minLength: 1 |
+
+        | `latitude` | string | No | Latitude. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `longitude` | string | No | Longitude. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `default_checkin` | integer | No | Check-in hour; default 15. minimum: 0; maximum: 23 |
+
+        | `default_checkout` | integer | No | Checkout hour; default 11. minimum: 0; maximum: 23 |
+
+        | `license_number` | string | Yes | Government license number, not an internal ID. pattern: "^[0-9]+$" |
+
+        | `license_type` | string | No | Government license type; default RNAL. enum: ["RNAL","RNET","RRAL"] |
+
+        | `siba_id` | string | No | SIBA ID. pattern: "^([0-9]{9})?$" |
+
+        | `siba_order` | integer | No | SIBA establishment number; default 0. minimum: 0; maximum: 9007199254740991 |
+
+        | `siba_code` | string | No | SIBA activation key. pattern: "^([0-9]{12})?$" |
+
+        | `invoicing_nif` | string | No | Property invoicing VAT ID; any nonempty value requires fiscal authorization.  |
+
+        | `invoicing_name` | string | No | Invoicing name.  |
+
+        | `invoicing_email` | string | No | Invoicing email.  |
+
+        | `invoicing_phone` | string | No | Invoicing phone.  |
+
+        | `invoicing_address` | string | No | Invoicing address.  |
+
+        | `typology` | string | No | Property typology; default T1. enum: ["T0","T1","T2","T3","T4","T5","T6","NA"] |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addProperty'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addProperty
+      body:
+        mode: raw
+        raw: "{\n  \"property_name\": \"Example Apartment\",\n  \"address\": \"Rua Exemplo 1\",\n  \"zip\": \"1000-001\",\n\
+          \  \"city\": \"Lisboa\",\n  \"license_number\": \"12345\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: updateProperty
+    request:
+      method: PATCH
+      description: 'Update supplied property fields; typology is not supported.
+
+
+        Supply at least one editable property field. Omitted fields remain unchanged.
+
+
+        Any nonempty invoicing_nif must be authorized for this account.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `property_name` | string | No | Property name. minLength: 1 |
+
+        | `address` | string | No | Street address. minLength: 1 |
+
+        | `zip` | string | No | Portuguese postal code. pattern: "^[0-9]{4}-[0-9]{3}$" |
+
+        | `city` | string | No | City. minLength: 1 |
+
+        | `latitude` | string | No | Latitude. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `longitude` | string | No | Longitude. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `default_checkin` | integer | No | Check-in hour; default 15. minimum: 0; maximum: 23 |
+
+        | `default_checkout` | integer | No | Checkout hour; default 11. minimum: 0; maximum: 23 |
+
+        | `license_number` | string | No | Government license number, not an internal ID. pattern: "^[0-9]+$" |
+
+        | `license_type` | string | No | Government license type; default RNAL. enum: ["RNAL","RNET","RRAL"] |
+
+        | `siba_id` | string | No | SIBA ID. pattern: "^([0-9]{9})?$" |
+
+        | `siba_order` | integer | No | SIBA establishment number; default 0. minimum: 0; maximum: 9007199254740991 |
+
+        | `siba_code` | string | No | SIBA activation key. pattern: "^([0-9]{12})?$" |
+
+        | `invoicing_nif` | string | No | Property invoicing VAT ID; any nonempty value requires fiscal authorization.  |
+
+        | `invoicing_name` | string | No | Invoicing name.  |
+
+        | `invoicing_email` | string | No | Invoicing email.  |
+
+        | `invoicing_phone` | string | No | Invoicing phone.  |
+
+        | `invoicing_address` | string | No | Invoicing address.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/updateProperty'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - updateProperty
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"default_checkin\": 16\n}"
+        options:
+          raw:
+            language: json
+    response: []
+- name: Reservations
+  description: Reservations and their associated extras.
+  item:
+  - name: getReservations
+    request:
+      method: GET
+      description: 'List reservations by identity or the existing date and equality filters.
+
+
+        Require rcode, or channelmanager and id together, or at least one date filter.
+
+
+        Do not combine rcode and CM identity; reject incomplete CM selectors even when dates are supplied.
+
+
+        Identity and list filters cannot be combined: rcode/CM selectors reject from_date, to_date, reservation_date, date_filter,
+        room, provider, language and nif rather than ignoring them.
+
+
+        date_filter requires from_date or to_date; from_date <= to_date. Validate real calendar dates.
+
+
+        The current date search rejects dates more than 365 days in the past; future dates are accepted.
+
+
+        Preserve supplied filters. This is not an overlap search. Without date_filter the end boundary is midnight; with it,
+        the selected end day is included.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | No | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `channelmanager` | string | No | Channel manager name for the external id. pattern: "^[A-Za-z0-9_]+$" |
+
+        | `id` | integer | No | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+        | `from_date` | string | No | Without date_filter: check-in >= this date at midnight. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        |
+
+        | `to_date` | string | No | Without date_filter: checkout <= this date at midnight. With date_filter: include the
+        selected end day. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `reservation_date` | string | No | Lower bound on reservation creation, not a single-day match. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        |
+
+        | `date_filter` | string | No | Apply both boundaries to check-in or checkout. enum: ["checkin","checkout"] |
+
+        | `get_archived` | boolean | No | Search archived instead of active reservations. CM identity lookup searches both
+        in the current app.  |
+
+        | `room` | string | No | Room filter.  |
+
+        | `provider` | string | No | Exact provider filter.  |
+
+        | `language` | string | No | Exact language filter.  |
+
+        | `nif` | string | No | Exact reservation VAT ID, not invoicing_nif.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getReservations?apid=123&rcode=ABC123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getReservations
+        query:
+        - key: apid
+          value: '123'
+        - key: rcode
+          value: ABC123
+    response: []
+  - name: addReservation
+    request:
+      method: POST
+      description: 'Create a reservation using current app fields.
+
+
+        Require name or first_name and last_name. Validate calendar/time values and checkout after check-in.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `name` | string | No | Full name; alternative to first_name and last_name. minLength: 1 |
+
+        | `first_name` | string | No | First name. minLength: 1; maxLength: 40 |
+
+        | `last_name` | string | No | Last name. minLength: 1; maxLength: 40 |
+
+        | `check_in` | string | Yes | Check-in in the existing app/server business timezone; no per-property conversion is
+        added. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$" |
+
+        | `check_out` | string | Yes | Checkout in the existing app/server business timezone; no per-property conversion is
+        added. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$" |
+
+        | `pax` | integer | No | Number of guests; default 1. minimum: 0; maximum: 100 |
+
+        | `email` | string | No | Guest email.  |
+
+        | `phone` | string | No | Guest phone.  |
+
+        | `received_amount` | string | No | Received amount; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `host_commission` | string | No | Channel commission; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `cleaning_fee` | string | No | Cleaning fee; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `extra_fees` | string | No | Extra fees; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `city_tax` | string | No | City tax; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `provider` | string | No | Provider/channel name.  |
+
+        | `room` | string | No | Room, or comma-separated rooms as accepted by the current app.  |
+
+        | `beds` | string | No | Beds.  |
+
+        | `private_note` | string | No | Reservation private note.  |
+
+        | `service_notes` | string | No | Service user notes.  |
+
+        | `vat_number` | string | No | Reservation customer VAT ID.  |
+
+        | `vat_name` | string | No | Reservation customer fiscal name.  |
+
+        | `flight` | string | No | Flight number.  |
+
+        | `flight_time` | string | No | Flight time.  |
+
+        | `arrival_by` | string | No | Arrival transport.  |
+
+        | `service_in` | string | No | Assigned check-in service.  |
+
+        | `service_out` | string | No | Assigned checkout service.  |
+
+        | `service_cleaning` | string | No | Assigned cleaning service.  |
+
+        | `service_transfer_arr` | string | No | Assigned arrival transfer service.  |
+
+        | `service_transfer_dep` | string | No | Assigned departure transfer service.  |
+
+        | `service_laundry` | string | No | Assigned laundry service.  |
+
+        | `reservation_date` | string | No | Reservation creation date; omission uses the current time. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        |
+
+        | `block_sef` | boolean | No | Block SIBA automation; default false.  |
+
+        | `create_payment` | boolean | No | Create payment; default false.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addReservation'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addReservation
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\",\n  \"check_in\": \"2026-10-10 16:00\",\n  \"check_out\": \"2026-10-12\
+          \ 11:00\",\n  \"name\": \"Example Person\",\n  \"create_payment\": false\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: updateReservation
+    request:
+      method: PATCH
+      description: 'Update supplied fields in an active or archived reservation.
+
+
+        Supply at least one editable field in addition to apid and rcode. Omitted fields remain unchanged.
+
+
+        Creation-only reservation_date, block_sef and create_payment are not accepted.
+
+
+        When only check_in or check_out is supplied, validate it against the stored counterpart; checkout must follow check-in.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `name` | string | No | Full name; alternative to first_name and last_name. minLength: 1 |
+
+        | `first_name` | string | No | First name. minLength: 1; maxLength: 40 |
+
+        | `last_name` | string | No | Last name. minLength: 1; maxLength: 40 |
+
+        | `check_in` | string | No | Check-in in the existing app/server business timezone; no per-property conversion is
+        added. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$" |
+
+        | `check_out` | string | No | Checkout in the existing app/server business timezone; no per-property conversion is
+        added. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$" |
+
+        | `pax` | integer | No | Number of guests; default 1. minimum: 0; maximum: 100 |
+
+        | `email` | string | No | Guest email.  |
+
+        | `phone` | string | No | Guest phone.  |
+
+        | `received_amount` | string | No | Received amount; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `host_commission` | string | No | Channel commission; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `cleaning_fee` | string | No | Cleaning fee; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `extra_fees` | string | No | Extra fees; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `city_tax` | string | No | City tax; default 0. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+        | `provider` | string | No | Provider/channel name.  |
+
+        | `room` | string | No | Room, or comma-separated rooms as accepted by the current app.  |
+
+        | `beds` | string | No | Beds.  |
+
+        | `private_note` | string | No | Reservation private note.  |
+
+        | `service_notes` | string | No | Service user notes.  |
+
+        | `vat_number` | string | No | Reservation customer VAT ID.  |
+
+        | `vat_name` | string | No | Reservation customer fiscal name.  |
+
+        | `flight` | string | No | Flight number.  |
+
+        | `flight_time` | string | No | Flight time.  |
+
+        | `arrival_by` | string | No | Arrival transport.  |
+
+        | `service_in` | string | No | Assigned check-in service.  |
+
+        | `service_out` | string | No | Assigned checkout service.  |
+
+        | `service_cleaning` | string | No | Assigned cleaning service.  |
+
+        | `service_transfer_arr` | string | No | Assigned arrival transfer service.  |
+
+        | `service_transfer_dep` | string | No | Assigned departure transfer service.  |
+
+        | `service_laundry` | string | No | Assigned laundry service.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/updateReservation'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - updateReservation
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\",\n  \"phone\": \"+351210000000\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: cancelReservation
+    request:
+      method: PATCH
+      description: 'Atomically move an active or archived reservation to cancellations; this is not deletion.
+
+
+        Requires InnoDB tables properties, reservations, reservations_archived, reservations_cancelled, fac_invoices and fac_config.
+        Lock the property/reservation and require one unambiguous source; failures roll back the move.
+
+
+        If a closed related invoice and credit_note_on_cancel configuration require automatic fiscal cancellation, return
+        HTTP 503 automatic_credit_note_unavailable before reservation or fiscal changes. Complete the separate fiscal workflow
+        in the application. No automatic credit notes or external AT series registration are provided by this operation.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/cancelReservation'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - cancelReservation
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: deleteReservation
+    request:
+      method: DELETE
+      description: 'Atomically delete a reservation and related records permanently.
+
+
+        Requires all affected reservation, related-data and channel-manager mapping tables to use InnoDB. Fail closed with
+        HTTP 503 transactions_unavailable when transactional requirements are not met; partial deletion is not permitted.
+
+
+        Lock the property/reservation and require one unambiguous active or archived source before deleting related records.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/deleteReservation'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - deleteReservation
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: getPayments
+    request:
+      method: GET
+      description: 'Read reservation payments.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getPayments?apid=123&rcode=ABC123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getPayments
+        query:
+        - key: apid
+          value: '123'
+        - key: rcode
+          value: ABC123
+    response: []
+  - name: getOnlineCheckin
+    request:
+      method: GET
+      description: 'Read reservation online check-in link and status.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getOnlineCheckin?apid=123&rcode=ABC123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getOnlineCheckin
+        query:
+        - key: apid
+          value: '123'
+        - key: rcode
+          value: ABC123
+    response: []
+  - name: Extras
+    description: Reservation extras.
     item:
-      - name: getLicense
-        request:
-          method: GET
-          url: "{{baseUrl}}/getLicense"
+    - name: addReservationExtra
+      request:
+        method: POST
+        description: 'Add a reservation extra; create the fiscal product if absent, as in the current app.
 
-  - name: Properties
+
+          extra_total must be greater than zero; extra_vat must exist in the fiscal VAT catalogue.
+
+
+          Authorize the property invoicing/extras NIF before creating a product.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+          | `extra_id` | string | Yes | Extra product code; current runtime permits fewer than 20 characters. pattern: "^[A-Za-z0-9_-]{1,19}$"
+          |
+
+          | `extra_name` | string | Yes | Extra name.  |
+
+          | `extra_vat` | integer | Yes | Existing fiscal VAT rate. minimum: 0; maximum: 100 |
+
+          | `extra_type` | string | Yes | S service, I tax, P product. enum: ["S","I","P"] |
+
+          | `extra_total` | string | Yes | Positive extra total. pattern: "^[0-9]+(\\.[0-9]+)?$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addReservationExtra'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addReservationExtra
+        body:
+          mode: raw
+          raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\",\n  \"extra_id\": \"EXTRA1\",\n  \"extra_name\": \"Example extra\"\
+            ,\n  \"extra_vat\": 23,\n  \"extra_type\": \"S\",\n  \"extra_total\": \"10.00\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: deleteReservationExtras
+      request:
+        method: DELETE
+        description: 'Delete all extras of the explicitly identified reservation.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/deleteReservationExtras'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - deleteReservationExtras
+        body:
+          mode: raw
+          raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: getReservationExtras
+      request:
+        method: GET
+        description: 'Read saved reservation extra lines; no invented catalogue fields.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getReservationExtras?apid=123&rcode=ABC123'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getReservationExtras
+          query:
+          - key: apid
+            value: '123'
+          - key: rcode
+            value: ABC123
+      response: []
+- name: Guests
+  description: Reservation guests and SIBA submissions.
+  item:
+  - name: addGuest
+    request:
+      method: POST
+      description: 'Add guest data to a reservation.
+
+
+        Require name or first_name and last_name; verify country codes and departure after arrival.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `name` | string | No | Full name; alternative to first_name and last_name. minLength: 1 |
+
+        | `first_name` | string | No | First name. minLength: 1; maxLength: 40 |
+
+        | `last_name` | string | No | Last name. minLength: 1; maxLength: 40 |
+
+        | `nationality` | string | Yes | Nationality: existing ICAO/ISO country code.  |
+
+        | `birthday` | string | Yes | Birth date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `doc_id` | string | Yes | Identity document number. maxLength: 16 |
+
+        | `doc_type` | string | Yes | Identity document type. enum: ["P","B","ID","BI","O","Passaporte","Passport","Outro","Other"]
+        |
+
+        | `doc_country` | string | Yes | Issuing country code.  |
+
+        | `arrival` | string | Yes | Arrival date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `departure` | string | Yes | Departure date, after arrival. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `country_residence` | string | Yes | Country of residence code.  |
+
+        | `city_residence` | string | Yes | City of residence. maxLength: 30 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addGuest'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addGuest
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\",\n  \"nationality\": \"PRT\",\n  \"birthday\": \"1990-01-01\",\n\
+          \  \"doc_id\": \"EXAMPLE123\",\n  \"doc_type\": \"P\",\n  \"doc_country\": \"PRT\",\n  \"arrival\": \"2026-10-10\"\
+          ,\n  \"departure\": \"2026-10-12\",\n  \"country_residence\": \"PRT\",\n  \"city_residence\": \"Lisboa\",\n  \"\
+          name\": \"Example Person\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: removeGuest
+    request:
+      method: DELETE
+      description: 'Remove the explicitly named guest from a reservation.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `name` | string | No | Full name; alternative to first_name and last_name. minLength: 1 |
+
+        | `first_name` | string | No | First name. minLength: 1; maxLength: 40 |
+
+        | `last_name` | string | No | Last name. minLength: 1; maxLength: 40 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/removeGuest'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - removeGuest
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\",\n  \"name\": \"Example Person\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: removeAllGuests
+    request:
+      method: DELETE
+      description: 'Remove all guest data from the explicitly identified reservation.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/removeAllGuests'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - removeAllGuests
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+- name: Smartlocks
+  description: Smartlock providers and access codes.
+  item:
+  - name: getKeycode
+    request:
+      method: GET
+      description: 'Read a reservation keycode or invite code from a supported lock provider.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | Yes | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `provider` | string | Yes | Lock provider. enum: ["nuki","homeit","ttlock","salto","omnitec","voyager","tedee","assa_abloy"]
+        |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getKeycode?apid=123&provider=nuki&rcode=ABC123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getKeycode
+        query:
+        - key: apid
+          value: '123'
+        - key: rcode
+          value: ABC123
+        - key: provider
+          value: nuki
+    response: []
+- name: SIBA
+  description: SIBA accommodation configuration.
+  item:
+  - name: getLastSIBADate
+    request:
+      method: GET
+      description: 'Read the last successful SIBA submission date. The current app records this at account level.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getLastSIBADate?apid=123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getLastSIBADate
+        query:
+        - key: apid
+          value: '123'
+    response: []
+  - name: validateSIBA
+    request:
+      method: GET
+      description: 'Validate stored reservation data or explicit guest data without submitting.
+
+
+        Require rcode or complete named guest data. Validate countries, dates and departure after arrival.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | No | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `name` | string | No | Full name; alternative to first_name and last_name. minLength: 1 |
+
+        | `first_name` | string | No | First name. minLength: 1; maxLength: 40 |
+
+        | `last_name` | string | No | Last name. minLength: 1; maxLength: 40 |
+
+        | `nationality` | string | No | Nationality: existing ICAO/ISO country code.  |
+
+        | `birthday` | string | No | Birth date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `doc_id` | string | No | Identity document number. maxLength: 16 |
+
+        | `doc_type` | string | No | Identity document type. enum: ["P","B","ID","BI","O","Passaporte","Passport","Outro","Other"]
+        |
+
+        | `doc_country` | string | No | Issuing country code.  |
+
+        | `arrival` | string | No | Arrival date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `departure` | string | No | Departure date, after arrival. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `country_residence` | string | No | Country of residence code.  |
+
+        | `city_residence` | string | No | City of residence. maxLength: 30 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/validateSIBA?apid=123&rcode=ABC123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - validateSIBA
+        query:
+        - key: apid
+          value: '123'
+        - key: rcode
+          value: ABC123
+    response: []
+  - name: sendSIBA
+    request:
+      method: POST
+      description: 'Submit stored reservation data or explicit guest data.
+
+
+        Require rcode or complete named guest data. Reconcile external submission state before retrying an uncertain result.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `rcode` | string | No | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `name` | string | No | Full name; alternative to first_name and last_name. minLength: 1 |
+
+        | `first_name` | string | No | First name. minLength: 1; maxLength: 40 |
+
+        | `last_name` | string | No | Last name. minLength: 1; maxLength: 40 |
+
+        | `nationality` | string | No | Nationality: existing ICAO/ISO country code.  |
+
+        | `birthday` | string | No | Birth date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `doc_id` | string | No | Identity document number. maxLength: 16 |
+
+        | `doc_type` | string | No | Identity document type. enum: ["P","B","ID","BI","O","Passaporte","Passport","Outro","Other"]
+        |
+
+        | `doc_country` | string | No | Issuing country code.  |
+
+        | `arrival` | string | No | Arrival date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `departure` | string | No | Departure date, after arrival. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `country_residence` | string | No | Country of residence code.  |
+
+        | `city_residence` | string | No | City of residence. maxLength: 30 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/sendSIBA'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - sendSIBA
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"rcode\": \"ABC123\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+- name: Expenses
+  description: Expenses and expense lines.
+  item:
+  - name: getExpenses
+    request:
+      method: GET
+      description: 'List expenses by an inclusive document date range or read one expense by id.
+
+
+        Supply id for one expense without dates, or both date_start and date_end for a list. Optional dates also constrain
+        an id lookup. Results remain an array, empty when no expense matches.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `id` | integer | No | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+        | `date_start` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |
+
+        | `date_end` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getExpenses?apid=123&date_end=1793491199&date_start=1790812800'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getExpenses
+        query:
+        - key: apid
+          value: '123'
+        - key: date_start
+          value: '1790812800'
+        - key: date_end
+          value: '1793491199'
+        - key: id
+          value: '1'
+          disabled: true
+          description: Numeric resource/document identity.
+    response: []
+  - name: addExpense
+    request:
+      method: POST
+      description: 'Create an expense, optionally with atomic lines; without lines the header has zero totals.
+
+
+        document=cnote requires type=variable. Nonzero pmc requires the PMC addon. Requires an active property with the expenses
+        module.
+
+
+        Optional lines are committed atomically with the header, require transactional InnoDB tables, and are bounded at 20
+        within the 8192-byte body limit.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `category` | integer | Yes | Existing expense category ID. minimum: 1; maximum: 9007199254740991 |
+
+        | `document` | string | Yes | Expense document. enum: ["invoice","cnote"] |
+
+        | `type` | string | Yes | Expense type; credit notes require variable. enum: ["fixed","variable"] |
+
+        | `vendor` | string | Yes | Vendor. minLength: 1; maxLength: 50 |
+
+        | `number` | string | Yes | Document number. minLength: 1; maxLength: 30 |
+
+        | `date` | string | Yes | Document date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `description` | string | No | Description. maxLength: 255 |
+
+        | `payment_date` | string | No | Payment date or empty to leave unpaid. pattern: "^([0-9]{4}-[0-9]{2}-[0-9]{2})?$"
+        |
+
+        | `rcode` | string | No | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+        | `active` | boolean | No | Active; default true.  |
+
+        | `pmc` | integer | No | 0 exclude, 1 invoice expense, 2 deduct expense; default 0. minimum: 0; maximum: 2 |
+
+        | `lines` | array of object | No | Atomic expense lines; the entire signed JSON body must fit 8192 bytes. minItems:
+        1; maxItems: 20 |
+
+        | `lines[].description` | string | Yes | Line description. maxLength: 255 |
+
+        | `lines[].amount` | string | Yes | Nonnegative amount, at most two decimal places. pattern: "^[0-9]{1,10}(\\.[0-9]{1,2})?$"
+        |
+
+        | `lines[].vat_rate` | string | Yes | VAT percentage 0 to 100, at most two decimal places. pattern: "^([0-9]{1,2}(\\.[0-9]{1,2})?\|100(\\.0{1,2})?)$"
+        |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addExpense'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addExpense
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"category\": 20,\n  \"document\": \"invoice\",\n  \"type\": \"variable\",\n  \"vendor\"\
+          : \"Example Vendor\",\n  \"number\": \"FT EXAMPLE\",\n  \"date\": \"2026-10-01\",\n  \"active\": true,\n  \"lines\"\
+          : [\n    {\n      \"description\": \"Example repair\",\n      \"amount\": \"100.00\",\n      \"vat_rate\": \"23.00\"\
+          \n    }\n  ]\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: addExpenseLine
+    request:
+      method: POST
+      description: 'Add one expense line and recalculate totals.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+        | `description` | string | Yes | Line description. maxLength: 255 |
+
+        | `amount` | string | Yes | Nonnegative amount, at most two decimal places. pattern: "^[0-9]{1,10}(\\.[0-9]{1,2})?$"
+        |
+
+        | `vat_rate` | string | Yes | VAT percentage 0 to 100, at most two decimal places. pattern: "^([0-9]{1,2}(\\.[0-9]{1,2})?\|100(\\.0{1,2})?)$"
+        |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addExpenseLine'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addExpenseLine
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"id\": 1,\n  \"description\": \"Example repair\",\n  \"amount\": \"100.00\",\n  \"vat_rate\"\
+          : \"23.00\"\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: deleteExpense
+    request:
+      method: DELETE
+      description: 'Permanently delete an expense and its lines.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/deleteExpense'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - deleteExpense
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"id\": 1\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: disableExpense
+    request:
+      method: PATCH
+      description: 'Set an expense inactive without deleting its lines.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/disableExpense'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - disableExpense
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"id\": 1\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: getExpenseCategories
+    request:
+      method: GET
+      description: 'Read the existing expense category choices; only id and type are present in app data.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getExpenseCategories?apid=123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getExpenseCategories
+        query:
+        - key: apid
+          value: '123'
+    response: []
+- name: Invoicing
+  description: Invoices, credit notes, receipts and fiscal settings.
+  item:
+  - name: Invoices
+    description: Invoices, credit notes and receipts. See each request for parameters, permissions and business rules.
     item:
-      - name: getProperties
-        request:
-          method: GET
-          url: "{{baseUrl}}/getProperties"
+    - name: getInvoices
+      request:
+        method: GET
+        description: 'List fiscal invoices, optionally filtered by reservation/property or document identity.
 
-      - name: getProperty
-        request:
-          method: GET
-          url: "{{baseUrl}}/getProperty"
 
-      - name: addProperty
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addProperty?property_name=&address=&zip=&city="
-            query:
-              - key: property_name
-                value: ""
-              - key: address
-                value: ""
-              - key: zip
-                value: ""
-              - key: city
-                value: ""
-              - key: latitude
-                value: ""
-                disabled: true
-              - key: longitude
-                value: ""
-                disabled: true
-              - key: default_checkin
-                value: ""
-                disabled: true
-              - key: default_checkout
-                value: ""
-                disabled: true
-              - key: license_number
-                value: ""
-                disabled: true
-              - key: license_type
-                value: ""
-                disabled: true
-              - key: typology
-                value: ""
-                disabled: true
+          When rcode is supplied, apid is required and their relationship must be verified. Any supplied apid must belong
+          to the account.
 
-      - name: updateProperty
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/updateProperty"
-            query:
-              - key: property_name
-                value: ""
-                disabled: true
-              - key: address
-                value: ""
-                disabled: true
-              - key: zip
-                value: ""
-                disabled: true
-              - key: city
-                value: ""
-                disabled: true
-              - key: latitude
-                value: ""
-                disabled: true
-              - key: longitude
-                value: ""
-                disabled: true
 
-  - name: Reservations
+          For a single document, supply invoicing_nif, series, id and doc_type (FR or FT). An id alone may match multiple
+          series/types. Results remain an array; other supplied filters intersect.
+
+
+          Do not fabricate a property association for historical standalone documents.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Exact document series.  |
+
+          | `id` | integer | No | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `customer_id` | string | No | Exact customer ID/VAT ID.  |
+
+          | `date_start` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |
+
+          | `date_end` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |
+
+          | `apid` | integer | No | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | No | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+          | `doc_type` | string | No | Invoice document type, for example FR or FT.  |
+
+          | `source` | string | No | Invoice source; bulk maps to genmissing in the current runtime.  |
+
+          | `show_property` | boolean | No | Include property ID and name when known.  |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getInvoices?invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getInvoices
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+          - key: series
+            value: EXAMPLE
+            disabled: true
+            description: Exact document series.
+          - key: id
+            value: '1'
+            disabled: true
+            description: Numeric resource/document identity.
+          - key: doc_type
+            value: FT
+            disabled: true
+            description: Invoice document type, for example FR or FT.
+      response: []
+    - name: getReceipts
+      request:
+        method: GET
+        description: 'List receipts or read one by its document identity.
+
+
+          For a single document, supply invoicing_nif, series and id. An id alone may match multiple series. Results remain
+          an array; other supplied filters intersect.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Exact document series.  |
+
+          | `id` | integer | No | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `customer_id` | string | No | Exact customer ID/VAT ID.  |
+
+          | `date_start` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |
+
+          | `date_end` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getReceipts?invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getReceipts
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+          - key: series
+            value: EXAMPLE
+            disabled: true
+            description: Exact document series.
+          - key: id
+            value: '1'
+            disabled: true
+            description: Numeric resource/document identity.
+      response: []
+    - name: getCreditNotes
+      request:
+        method: GET
+        description: 'List credit notes or read one by its document identity.
+
+
+          For a single document, supply invoicing_nif, series and id; invoice_type selects the referenced invoice type (default
+          FR, use FT when applicable). An id alone may match multiple series. Results remain an array; other supplied filters
+          intersect.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Exact document series.  |
+
+          | `id` | integer | No | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `customer_id` | string | No | Exact customer ID/VAT ID.  |
+
+          | `date_start` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |
+
+          | `date_end` | integer | No | Unix timestamp in seconds. minimum: 0; maximum: 9007199254740991 |
+
+          | `invoice_type` | string | No | Referenced invoice type; default FR. enum: ["FR","FT"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getCreditNotes?invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getCreditNotes
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+          - key: series
+            value: EXAMPLE
+            disabled: true
+            description: Exact document series.
+          - key: id
+            value: '1'
+            disabled: true
+            description: Numeric resource/document identity.
+          - key: invoice_type
+            value: FR
+            disabled: true
+            description: Referenced invoice type; default FR.
+      response: []
+    - name: addInvoice
+      request:
+        method: POST
+        description: 'Create an open fiscal invoice; rcode is optional. Add lines and close it explicitly.
+
+
+          When rcode is supplied, require apid and verify the reservation belongs to that property/account.
+
+
+          Validate authorized NIF/series. Optional lines are committed atomically with the draft, require transactional InnoDB
+          tables, and are bounded at 20 within the 8192-byte body limit. Closing is always explicit.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Document series; omission uses the configured default series.  |
+
+          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |
+
+          | `customer_id` | string | Yes | Customer ID/VAT ID; empty string means final consumer.  |
+
+          | `name` | string | Yes | Customer name.  |
+
+          | `country` | string | Yes | ICAO country code.  |
+
+          | `address` | string | No | Customer address.  |
+
+          | `cp` | string | No | Customer postal code; default 0000-000.  |
+
+          | `city` | string | No | Customer city; default -.  |
+
+          | `apid` | integer | No | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | No | Exact reservation code. pattern: "^[A-Za-z0-9._-]{1,80}$" |
+
+          | `comment` | string | No | Invoice comment.  |
+
+          | `payment_method` | string | No | Payment method; default TB. pattern: "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `lines` | array of object | No | Atomic invoice lines; the entire signed JSON body must fit 8192 bytes. minItems:
+          1; maxItems: 20 |
+
+          | `lines[].product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `lines[].custom_descr` | string | Yes | Line description.  |
+
+          | `lines[].qty` | string | Yes | Quantity. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].price` | string | Yes | Nonnegative unit price. pattern: "^[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].discount` | string | Yes | Line discount. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].vat` | string | Yes | VAT percentage. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].reason_code` | string | Yes | Exemption reason code, or empty string. pattern: "^[A-Za-z0-9._-]*$" |
+
+          | `lines[].region` | string | No | Fiscal product region; default PT. enum: ["PT","PT-MA","PT-AC"] |
+
+          | `lines[].type` | string | No | Product type; default S. enum: ["S","P","I"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addInvoice'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addInvoice
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"customer_id\": \"\",\n  \"name\": \"Example Person\",\n  \"country\"\
+            : \"PRT\",\n  \"lines\": [\n    {\n      \"product_id\": \"EXAMPLE1\",\n      \"custom_descr\": \"Example service\"\
+            ,\n      \"qty\": \"1\",\n      \"price\": \"10.00\",\n      \"discount\": \"0\",\n      \"vat\": \"23\",\n  \
+            \    \"reason_code\": \"\"\n    }\n  ]\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: addInvoiceLine
+      request:
+        method: POST
+        description: 'Add one line to an open invoice, creating a product if needed.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Document series; omission uses the configured default series.  |
+
+          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |
+
+          | `product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `custom_descr` | string | Yes | Line description.  |
+
+          | `qty` | string | Yes | Quantity. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `price` | string | Yes | Nonnegative unit price. pattern: "^[0-9]+(\\.[0-9]+)?$" |
+
+          | `discount` | string | Yes | Line discount. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `vat` | string | Yes | VAT percentage. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `reason_code` | string | Yes | Exemption reason code, or empty string. pattern: "^[A-Za-z0-9._-]*$" |
+
+          | `region` | string | No | Fiscal product region; default PT. enum: ["PT","PT-MA","PT-AC"] |
+
+          | `type` | string | No | Product type; default S. enum: ["S","P","I"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addInvoiceLine'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addInvoiceLine
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"product_id\": \"EXAMPLE1\",\n  \"custom_descr\"\
+            : \"Example service\",\n  \"qty\": \"1\",\n  \"price\": \"10.00\",\n  \"discount\": \"0\",\n  \"vat\": \"23\"\
+            ,\n  \"reason_code\": \"\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: addInvoiceLines
+      request:
+        method: POST
+        description: 'Atomically add a bounded batch of lines to an open invoice; close it explicitly.
+
+
+          Validate authorized NIF/series and open invoice identity. Requires transactional InnoDB tables. No automatic invoice
+          closing.
+
+
+          At most 20 lines; the entire signed JSON body must fit 8192 bytes.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Document series; omission uses the configured default series.  |
+
+          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |
+
+          | `lines` | array of object | Yes | Atomic invoice lines; the entire signed JSON body must fit 8192 bytes. minItems:
+          1; maxItems: 20 |
+
+          | `lines[].product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `lines[].custom_descr` | string | Yes | Line description.  |
+
+          | `lines[].qty` | string | Yes | Quantity. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].price` | string | Yes | Nonnegative unit price. pattern: "^[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].discount` | string | Yes | Line discount. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].vat` | string | Yes | VAT percentage. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
+
+          | `lines[].reason_code` | string | Yes | Exemption reason code, or empty string. pattern: "^[A-Za-z0-9._-]*$" |
+
+          | `lines[].region` | string | No | Fiscal product region; default PT. enum: ["PT","PT-MA","PT-AC"] |
+
+          | `lines[].type` | string | No | Product type; default S. enum: ["S","P","I"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addInvoiceLines'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addInvoiceLines
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"lines\": [\n    {\n      \"product_id\": \"EXAMPLE1\"\
+            ,\n      \"custom_descr\": \"Example service\",\n      \"qty\": \"1\",\n      \"price\": \"10.00\",\n      \"\
+            discount\": \"0\",\n      \"vat\": \"23\",\n      \"reason_code\": \"\"\n    }\n  ]\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: closeInvoice
+      request:
+        method: PATCH
+        description: 'Explicitly finalize an open fiscal invoice; verify data and totals first.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Document series; omission uses the configured default series.  |
+
+          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/closeInvoice'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - closeInvoice
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: deleteInvoice
+      request:
+        method: DELETE
+        description: 'Delete an open invoice only when the fiscal workflow permits it.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | No | Document series; omission uses the configured default series.  |
+
+          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/deleteInvoice'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - deleteInvoice
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: addReceipt
+      request:
+        method: POST
+        description: 'Create a receipt for an FT invoice.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `refseries` | string | Yes | Referenced invoice series.  |
+
+          | `refid` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addReceipt'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addReceipt
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"refseries\": \"EXAMPLE\",\n  \"refid\": 1\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: addCreditNote
+      request:
+        method: POST
+        description: 'Create a credit note for a closed invoice.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `refseries` | string | Yes | Referenced invoice series.  |
+
+          | `refid` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addCreditNote'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addCreditNote
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"refseries\": \"EXAMPLE\",\n  \"refid\": 1\n}"
+          options:
+            raw:
+              language: json
+      response: []
+  - name: Series
+    description: Invoicing series and local deactivation.
     item:
-      - name: getReservations
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getReservations?from_date=2026-01-01&to_date=2026-01-31"
-            query:
-              - key: from_date
-                value: "2026-01-01"
-              - key: to_date
-                value: "2026-01-31"
-              - key: date_filter
-                value: checkin
-                disabled: true
-              - key: reservation_date
-                value: ""
-                disabled: true
-              - key: get_archived
-                value: "true"
-                disabled: true
-              - key: room
-                value: ""
-                disabled: true
-              - key: provider
-                value: ""
-                disabled: true
-              - key: language
-                value: ""
-                disabled: true
-              - key: nif
-                value: ""
-                disabled: true
+    - name: getSeries
+      request:
+        method: GET
+        description: 'Read available invoicing series.
 
-      - name: getReservation
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getReservation?rcode="
-            query:
-              - key: rcode
-                value: ""
-              - key: get_archived
-                value: "true"
-                disabled: true
 
-      - name: getReservationByCmId
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getReservationByCmId?channelmanager=&id="
-            query:
-              - key: channelmanager
-                value: ""
-              - key: id
-                value: ""
+          Parameters
 
-      - name: addReservation
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addReservation?rcode=&first_name=&last_name=&check_in=2026-01-01&check_out=2026-01-02&pax=2"
-            query:
-              - key: rcode
-                value: ""
-              - key: first_name
-                value: ""
-              - key: last_name
-                value: ""
-              - key: check_in
-                value: "2026-01-01"
-              - key: check_out
-                value: "2026-01-02"
-              - key: pax
-                value: "2"
-              - key: name
-                value: ""
-                disabled: true
-              - key: email
-                value: ""
-                disabled: true
-              - key: phone
-                value: ""
-                disabled: true
-              - key: received_amount
-                value: ""
-                disabled: true
-              - key: provider
-                value: ""
-                disabled: true
-              - key: reservation_date
-                value: ""
-                disabled: true
 
-      - name: updateReservation
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/updateReservation?rcode="
-            query:
-              - key: rcode
-                value: ""
-              - key: check_in
-                value: ""
-                disabled: true
-              - key: check_out
-                value: ""
-                disabled: true
-              - key: name
-                value: ""
-                disabled: true
-              - key: email
-                value: ""
-                disabled: true
-              - key: phone
-                value: ""
-                disabled: true
+          | Field | Type | Required | Description / constraints |
 
-      - name: cancelReservation
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/cancelReservation?rcode="
-            query:
-              - key: rcode
-                value: ""
+          | --- | --- | --- | --- |
 
-      - name: deleteReservation
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/deleteReservation?rcode="
-            query:
-              - key: rcode
-                value: ""
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getSeries?invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getSeries
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+      response: []
+    - name: addSeries
+      request:
+        method: POST
+        description: 'Create and register a new invoicing series.
 
-      - name: getPayments
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getPayments?rcode="
-            query:
-              - key: rcode
-                value: ""
 
-      - name: getOnlineCheckin
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getOnlineCheckin?rcode="
-            query:
-              - key: rcode
-                value: ""
+          Register new Portuguese series with AT before storing the returned validation code. Creating FT also ensures the
+          associated RG series.
 
-      - name: addReservationExtra
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addReservationExtra?rcode=&extra_id=&extra_name=&extra_vat=&extra_total=&extra_type="
-            query:
-              - key: rcode
-                value: ""
-              - key: extra_id
-                value: ""
-              - key: extra_name
-                value: ""
-              - key: extra_vat
-                value: ""
-              - key: extra_total
-                value: ""
-              - key: extra_type
-                value: ""
 
-      - name: deleteReservationExtras
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/deleteReservationExtras?rcode="
-            query:
-              - key: rcode
-                value: ""
+          An existing series, active or inactive, returns conflict. The app stores locally inactive and AT-finalized series
+          identically; reactivation is not exposed by this operation.
 
-  - name: Guests
+
+          External AT registration and local SQL cannot be one transaction. Reconcile uncertain AT/SQL outcomes before any
+          new attempt; never blindly retry.
+
+
+          No default-series/property configuration is changed. Series creation requires the existing ATCUD module on the origin.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | Yes | Series identifier; PT identifiers cannot start with AT. pattern: "^[A-Za-z0-9._-]{1,64}$"
+          |
+
+          | `invoice_type` | string | Yes | Series document type. enum: ["FR","FT","RG"] |
+
+          | `cae` | string | No | Series CAE; omission uses the current invoicing CAE. pattern: "^[0-9]{4,5}$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addSeries'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addSeries
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"series\": \"EXAMPLE\",\n  \"invoice_type\": \"FR\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: disableSeries
+      request:
+        method: PATCH
+        description: 'Locally deactivate one document-type series without finalizing it at AT.
+
+
+          Deactivation is local only: no AT call and no irreversible fiscal closure. Preserve all historical documents and
+          the AT validation code.
+
+
+          Clear this series default flag. Existing property references are preserved, but new v2 invoice creation rejects
+          an inactive series.
+
+
+          Reactivation stays managed in the app. FT and RG are distinct identities; disabling one does not disable the other.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `series` | string | Yes | Series identifier; PT identifiers cannot start with AT. pattern: "^[A-Za-z0-9._-]{1,64}$"
+          |
+
+          | `invoice_type` | string | Yes | Series document type. enum: ["FR","FT","RG"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/disableSeries'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - disableSeries
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"series\": \"EXAMPLE\",\n  \"invoice_type\": \"FR\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+  - name: Products
+    description: Invoicing products and services.
     item:
-      - name: addGuest
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addGuest?rcode=&arrival=&departure=&first_name=&last_name=&nationality=&birthday=&doc_id=&doc_type=&doc_country=&country_residence=&city_residence="
-            query:
-              - key: rcode
-                value: ""
-              - key: arrival
-                value: ""
-              - key: departure
-                value: ""
-              - key: first_name
-                value: ""
-              - key: last_name
-                value: ""
-              - key: nationality
-                value: ""
-              - key: birthday
-                value: ""
-              - key: doc_id
-                value: ""
-              - key: doc_type
-                value: ""
-              - key: doc_country
-                value: ""
-              - key: country_residence
-                value: ""
-              - key: city_residence
-                value: ""
+    - name: getProducts
+      request:
+        method: GET
+        description: 'Read existing fiscal products.
 
-      - name: removeGuest
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/removeGuest?rcode=&name="
-            query:
-              - key: rcode
-                value: ""
-              - key: name
-                value: ""
 
-      - name: removeAllGuests
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/removeAllGuests?rcode="
-            query:
-              - key: rcode
-                value: ""
+          Parameters
 
-  - name: Smartlocks
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getProducts?invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getProducts
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+      response: []
+    - name: addProduct
+      request:
+        method: POST
+        description: 'Create a fiscal product without overwriting an existing product.
+
+
+          Validate VAT and exemption codes against fac_vat/fac_vat_isencoes. Nonzero VAT cannot have an exemption code.
+
+
+          New products are not configured as defaults. Duplicate product IDs within the account/NIF return product_exists.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `description` | string | Yes | Product description. minLength: 2; maxLength: 255 |
+
+          | `price` | string | Yes | Nonnegative unit price; decimal text. pattern: "^[0-9]+(\\.[0-9]+)?$" |
+
+          | `vat` | string | Yes | VAT percentage from the selected region catalog. pattern: "^[0-9]{1,2}(\\.[0-9]{1,2})?$"
+          |
+
+          | `reason_code` | string | No | Existing exemption code; required for zero VAT. pattern: "^[A-Za-z0-9._-]{0,16}$"
+          |
+
+          | `region` | string | No | Fiscal region; default PT. enum: ["PT","PT-MA","PT-AC"] |
+
+          | `type` | string | No | Product type; default S. enum: ["S","P","I"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addProduct'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addProduct
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"product_id\": \"EXAMPLE1\",\n  \"description\": \"Example repair\"\
+            ,\n  \"price\": \"10.00\",\n  \"vat\": \"23\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: deleteProduct
+      request:
+        method: DELETE
+        description: 'Delete a product only when no invoice line or property default uses it.
+
+
+          Return 409 product_in_use for any referencing invoice line, including draft, final or cancelled invoices, or a property
+          default.
+
+
+          Lock the product and check references within one transaction. V2 invoice line insertion shares the product-row lock;
+          existing v1 writers are unchanged.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/deleteProduct'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - deleteProduct
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"product_id\": \"EXAMPLE1\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+  - name: SAF-T
+    description: Generate and retrieve SAF-T files for an authorized invoicing VAT ID. See each request for parameters and
+      permissions.
     item:
-      - name: getKeycode
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getKeycode?rcode=&provider="
-            query:
-              - key: rcode
-                value: ""
-              - key: provider
-                value: ""
+    - name: generateSAFT
+      request:
+        method: POST
+        description: 'Generate a SAF-T file for an authorized fiscal account.
 
-  - name: Invoicing
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `year` | integer | Yes | Calendar year. minimum: 1000; maximum: 9999 |
+
+          | `month` | integer | Yes | Calendar month. minimum: 1; maximum: 12 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/generateSAFT'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - generateSAFT
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"year\": 2026,\n  \"month\": 10\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: getSAFT
+      request:
+        method: GET
+        description: 'Read an already generated SAF-T file as base64 content.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `year` | integer | Yes | Calendar year. minimum: 1000; maximum: 9999 |
+
+          | `month` | integer | Yes | Calendar month. minimum: 1; maximum: 12 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getSAFT?invoicing_nif=123456789&month=10&year=2026'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getSAFT
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+          - key: year
+            value: '2026'
+          - key: month
+            value: '10'
+      response: []
+  - name: Modelo30
+    description: Generate and retrieve Modelo 30 documents.
     item:
-      - name: getInvoices
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getInvoices"
-            query:
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: id
-                value: ""
-                disabled: true
-              - key: customer_id
-                value: ""
-                disabled: true
-              - key: date_start
-                value: ""
-                disabled: true
-              - key: date_end
-                value: ""
-                disabled: true
-              - key: doc_type
-                value: ""
-                disabled: true
-              - key: source
-                value: ""
-                disabled: true
-              - key: show_property
-                value: "1"
-                disabled: true
+    - name: generateModelo30
+      request:
+        method: POST
+        description: 'Generate and store the monthly Modelo 30 XML; this does not submit it to AT.
 
-      - name: getReservationInvoices
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getReservationInvoices?rcode="
-            query:
-              - key: rcode
-                value: ""
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-      
-      - name: getSeries
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getSeries?invoicing_nif="
-            query:
-              - key: invoicing_nif
-                value: ""
-                disabled: true
 
-      - name: getProducts
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getProducts?invoicing_nif="
-            query:
-              - key: invoicing_nif
-                value: ""
-                disabled: true
+          Requires a configured Finance Service code. Month is an integer 1..12 and is stored/formatted as two digits.
 
-      - name: getReceipts
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getReceipts"
-            query:
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: id
-                value: ""
-                disabled: true
-              - key: customer_id
-                value: ""
-                disabled: true
-              - key: date_start
-                value: ""
-                disabled: true
-              - key: date_end
-                value: ""
-                disabled: true
 
-      - name: getCreditNotes
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getCreditNotes"
-            query:
-              - key: invoice_type
-                value: FR
-                disabled: true
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: id
-                value: ""
-                disabled: true
-              - key: customer_id
-                value: ""
-                disabled: true
-              - key: date_start
-                value: ""
-                disabled: true
-              - key: date_end
-                value: ""
-                disabled: true
+          Include channel commissions for reservations with closed invoices in the selected period, excluding credited documents
+          and reservations assigned to another Modelo 30 period. Include saved monthly and recurring manual transactions.
 
-      - name: addInvoice
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addInvoice?customer_id=&name=&country="
-            query:
-              - key: customer_id
-                value: ""
-              - key: name
-                value: ""
-              - key: country
-                value: ""
-              - key: invoice_type
-                value: FR
-                disabled: true
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: address
-                value: ""
-                disabled: true
-              - key: cp
-                value: ""
-                disabled: true
-              - key: city
-                value: ""
-                disabled: true
-              - key: rcode
-                value: ""
-                disabled: true
-              - key: payment_method
-                value: ""
-                disabled: true
-              - key: comment
-                value: ""
-                disabled: true
 
-      - name: addInvoiceLine
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addInvoiceLine?id=&product_id=&custom_descr=&qty=&price=&discount=&vat=&reason_code="
-            query:
-              - key: id
-                value: ""
-              - key: product_id
-                value: ""
-              - key: custom_descr
-                value: ""
-              - key: qty
-                value: ""
-              - key: price
-                value: ""
-              - key: discount
-                value: ""
-              - key: vat
-                value: ""
-              - key: reason_code
-                value: ""
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: type
-                value: S
-                disabled: true
-              - key: region
-                value: PT
-                disabled: true
-              - key: invoice_type
-                value: FR
-                disabled: true
+          Regeneration replaces only this period. No eligible data returns 409 no_data without deleting a previous document
+          or tracking.
 
-      - name: closeInvoice
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/closeInvoice?id="
-            query:
-              - key: id
-                value: ""
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: invoice_type
-                value: FR
-                disabled: true
 
-      - name: deleteInvoice
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/deleteInvoice?id="
-            query:
-              - key: id
-                value: ""
-              - key: invoicing_nif
-                value: ""
-                disabled: true
-              - key: series
-                value: ""
-                disabled: true
-              - key: invoice_type
-                value: FR
-                disabled: true
+          Serialize generation per account/NIF; publish the XML by atomic rename after the SQL commit. Publication failure
+          returns document_publication_pending and requires operator reconciliation.
 
-      - name: addReceipt
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addReceipt?refseries=&refid="
-            query:
-              - key: refseries
-                value: ""
-              - key: refid
-                value: ""
-              - key: invoicing_nif
-                value: ""
-                disabled: true
 
-      - name: addCreditNote
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addCreditNote?refseries=&refid="
-            query:
-              - key: refseries
-                value: ""
-              - key: refid
-                value: ""
-              - key: invoice_type
-                value: FR
-                disabled: true
-              - key: invoicing_nif
-                value: ""
-                disabled: true
+          The output is the existing ISO-8859-1 XML format. File generation is not declaration submission or legal validation.
 
-      - name: generateSAFT
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/generateSAFT?invoicing_nif=&year=2026&month=1"
-            query:
-              - key: invoicing_nif
-                value: ""
-              - key: year
-                value: "2026"
-              - key: month
-                value: "1"
 
-      - name: getSAFT
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getSAFT?invoicing_nif=&year=2026&month=1"
-            query:
-              - key: invoicing_nif
-                value: ""
-              - key: year
-                value: "2026"
-              - key: month
-                value: "1"
+          Parameters
 
-  - name: Expenses
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `year` | integer | Yes | Calendar year. minimum: 1000; maximum: 9999 |
+
+          | `month` | integer | Yes | Calendar month. minimum: 1; maximum: 12 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/generateModelo30'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - generateModelo30
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"year\": 2026,\n  \"month\": 10\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: getModelo30
+      request:
+        method: GET
+        description: 'Read an already generated monthly Modelo 30 XML as Base64 JSON.
+
+
+          Verify account/NIF ownership before file access. No public download token URLs or AT credentials are exposed. Missing
+          XML returns document_not_found.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `year` | integer | Yes | Calendar year. minimum: 1000; maximum: 9999 |
+
+          | `month` | integer | Yes | Calendar month. minimum: 1; maximum: 12 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getModelo30?invoicing_nif=123456789&month=10&year=2026'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getModelo30
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+          - key: year
+            value: '2026'
+          - key: month
+            value: '10'
+      response: []
+  - name: Config
+    description: Invoicing configuration for an authorized VAT ID.
     item:
-      - name: getExpenses
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/getExpenses?date_start=1767225600&date_end=1769817599"
-            query:
-              - key: date_start
-                value: "1767225600"
-              - key: date_end
-                value: "1769817599"
+    - name: updateInvoicingConfig
+      request:
+        method: PATCH
+        description: 'Update supplied invoicing settings for an existing authorized NIF.
 
-      - name: addExpense
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addExpense?category=20&document=invoice&type=variable&vendor=Example%20Vendor&number=FT%20123&date=2026-09-25"
-            query:
-              - key: category
-                value: "20"
-              - key: document
-                value: invoice
-              - key: type
-                value: variable
-              - key: vendor
-                value: Example Vendor
-              - key: number
-                value: FT 123
-              - key: date
-                value: "2026-09-25"
-              - key: description
-                value: ""
-                disabled: true
-              - key: payment_date
-                value: ""
-                disabled: true
-              - key: rcode
-                value: ""
-                disabled: true
-              - key: active
-                value: "1"
-                disabled: true
-              - key: pmc
-                value: "0"
-                disabled: true
 
-      - name: addExpenseLine
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/addExpenseLine?id=123&description=Repair&amount=123.00&vat_rate=23"
-            query:
-              - key: id
-                value: "123"
-              - key: description
-                value: Repair
-              - key: amount
-                value: "123.00"
-              - key: vat_rate
-                value: "23"
+          Supply at least one editable field; omitted fields remain unchanged. No generic fac_config column access or NIF/owner
+          changes.
 
-      - name: deleteExpense
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/deleteExpense?id="
-            query:
-              - key: id
-                value: ""
 
-      - name: disableExpense
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/disableExpense?id="
-            query:
-              - key: id
-                value: ""
+          For a Portuguese account, the effective AT username must use the selected NIF. The password is write-only and not
+          echoed or logged by the API.
 
-  - name: SIBA
-    item:
-      - name: getLastSIBADate
-        request:
-          method: GET
-          url: "{{baseUrl}}/getLastSIBADate"
 
-      - name: validateSIBA
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/validateSIBA?rcode="
-            query:
-              - key: rcode
-                value: ""
+          Validate IRS choices against the existing catalogs. This does not test AT credentials or change banking/LLM configuration.
 
-      - name: sendSIBA
-        request:
-          method: GET
-          url:
-            raw: "{{baseUrl}}/sendSIBA?rcode="
-            query:
-              - key: rcode
-                value: ""
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,64}$" |
+
+          | `cae` | string | No | CAE, or empty to clear. pattern: "^([0-9]{4,5})?$" |
+
+          | `sf` | string | No | Finance Service code, or empty to clear. pattern: "^([0-9]{4})?$" |
+
+          | `pf_username` | string | No | AT sub-user for this NIF. No spaces; omitted preserves the current value. pattern:
+          "^[^\\s]+$"; minLength: 1; maxLength: 20 |
+
+          | `pf_password` | string | No | Write-only AT password; omitted preserves it. Never returned by the API. Use a private
+          local client, not a shared variable or chat. pattern: "^[^\\s]+$"; minLength: 1; maxLength: 16 |
+
+          | `auto_send_saft` | boolean | No | Automatically send SAF-T.  |
+
+          | `auto_send_saft_when` | integer | No | Day of automatic SAF-T delivery. minimum: 1; maximum: 5 |
+
+          | `default_irs_incidencia` | string | No | Existing fac_irs_incidencia val, or empty. maxLength: 64 |
+
+          | `default_irs_retencao` | string | No | Existing fac_irs_retencao val, or empty. maxLength: 64 |
+
+          | `inv_closed_default` | boolean | No | Existing invoicing setting: inv_closed_default.  |
+
+          | `inv_send_email` | boolean | No | Existing invoicing setting: inv_send_email.  |
+
+          | `inv_rollover` | boolean | No | Existing invoicing setting: inv_rollover.  |
+
+          | `credit_note_on_cancel` | boolean | No | Existing invoicing setting: credit_note_on_cancel.  |
+
+          | `auto_gen_pdf` | boolean | No | Existing invoicing setting: auto_gen_pdf.  |
+
+          | `inv_current_account` | boolean | No | Existing invoicing setting: inv_current_account.  |
+
+          | `iban` | string | No | IBAN without spaces, or empty. pattern: "^([A-Za-z]{2}[A-Za-z0-9]{13,32})?$" |
+
+          | `capital` | string | No | Registered capital, or empty. pattern: "^([0-9]+(\\.[0-9]{1,2})?)?$"; maxLength: 20
+          |
+
+          | `office` | string | No | Registered office. maxLength: 255 |
+
+          | `tax_id` | string | No | Additional tax identity. maxLength: 64 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/updateInvoicingConfig'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - updateInvoicingConfig
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"inv_send_email\": false\n}"
+          options:
+            raw:
+              language: json
+      response: []
+- name: Contracts
+  description: Rental contracts.
+  item:
+  - name: getRentalContracts
+    request:
+      method: GET
+      description: 'List rental contracts or read one by id or contract_ref.
+
+
+        Requires the rental-contract module and an ARRE property. Scope every contract and tenant to the authenticated owner
+        and apid.
+
+
+        Omit selectors to list contracts; supply id or contract_ref for an individual lookup. If both are supplied, both must
+        match. Results remain an array, empty when no contract matches.
+
+
+        Return saved contract fields and tenants; never return internal AT response diagnostics or credentials.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `id` | integer | No | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+        | `contract_ref` | string | No | Exact contract reference returned by addRentalContract. pattern: "^[A-Za-z0-9._-]{1,128}$"
+        |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getRentalContracts?apid=123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getRentalContracts
+        query:
+        - key: apid
+          value: '123'
+        - key: id
+          value: '1'
+          disabled: true
+          description: Numeric resource/document identity.
+        - key: contract_ref
+          value: ARR-123-2026-001
+          disabled: true
+          description: Exact contract reference returned by addRentalContract.
+    response: []
+  - name: addRentalContract
+    request:
+      method: POST
+      description: 'Create a draft rental contract for an ARRE property; automatic invoicing stays disabled.
+
+
+        Requires the rental-contract module and an ARRE property. parte_comum=true requires nonempty parte_arrendada.
+
+
+        Tenant arrays are bounded at 20 and the whole UTF-8 body at 8192 bytes. Validate actual calendar dates and countries.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `artigo` | string | Yes | Fiscal article. minLength: 1; maxLength: 10 |
+
+        | `fracao` | string | No | Fraction. maxLength: 10 |
+
+        | `contract_type` | string | Yes | Contract type. enum: ["ARREND","SUBARR","PROMES","CEDENC","ALUGUE"] |
+
+        | `purpose` | string | Yes | Purpose. enum: ["H_PERM","H_NPER","N_HABI"] |
+
+        | `start_date` | string | Yes | Start date. pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" |
+
+        | `end_date` | string | No | End date or empty. pattern: "^([0-9]{4}-[0-9]{2}-[0-9]{2})?$" |
+
+        | `rent` | string | Yes | Rent. pattern: "^[0-9]+(\\.[0-9]+)?$" |
+
+        | `deposit` | string | No | Deposit; default 0. pattern: "^[0-9]+(\\.[0-9]+)?$" |
+
+        | `renewable` | boolean | No | Renewable; default false.  |
+
+        | `rent_period` | string | No | Rent period; default MENSAL. enum: ["MENSAL","MENORM"] |
+
+        | `parte_comum` | boolean | No | Common part; default false.  |
+
+        | `parte_arrendada` | string | No | Rented part; required when parte_comum is true. maxLength: 255 |
+
+        | `send_invoice_by_email` | boolean | No | Send invoice by email; default false.  |
+
+        | `tenants` | array of object | Yes |  minItems: 1; maxItems: 20 |
+
+        | `tenants[].name` | string | Yes | Tenant name. minLength: 1; maxLength: 170 |
+
+        | `tenants[].country` | string | Yes | Existing ICAO/ISO country code. minLength: 1 |
+
+        | `tenants[].nif` | string | No | Optional Portuguese VAT ID. pattern: "^([0-9]{9})?$" |
+
+        | `tenants[].id_document` | string | No | Identity document. maxLength: 100 |
+
+        | `tenants[].email` | string | No | Optional tenant email.  |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addRentalContract'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addRentalContract
+      body:
+        mode: raw
+        raw: "{\n  \"apid\": 123,\n  \"artigo\": \"123\",\n  \"contract_type\": \"ARREND\",\n  \"purpose\": \"H_PERM\",\n\
+          \  \"start_date\": \"2026-10-01\",\n  \"rent\": \"500.00\",\n  \"tenants\": [\n    {\n      \"name\": \"Example\
+          \ Tenant\",\n      \"country\": \"PRT\"\n    }\n  ]\n}"
+        options:
+          raw:
+            language: json
+    response: []
+- name: City Tax
+  description: City-tax declarations and available PDF documents.
+  item:
+  - name: getCityTaxDeclarations
+    request:
+      method: GET
+      description: 'Read city-tax declarations with their local PDF in document as base64 JSON, or null when no local PDF
+        is available.
+
+
+        uniqid requires source. Month and quarter are mutually exclusive and require year. Conflicting declaration identities
+        must be rejected.
+
+
+        Validate source-specific periods and states. iTaxas keeps its stored numeric month when historical periodicity is
+        unknown.
+
+
+        Grouped declarations appear once and must include the requested property. Never expose municipal credentials or internal
+        error text.
+
+
+        Returns declarations, limit, offset and has_more. Each declaration contains document: {content_base64, content_type,
+        filename} for an available local TMTAI PDF, otherwise null.
+
+
+        document_available is distinct from document_supported. Remote iTaxas documents are not fetched and token URLs are
+        never returned. Invalid local PDF content returns invalid_document. Local files are bounded at 50 MiB; delivery additionally
+        requires the page to fit 60 MiB of encoded document JSON, below the 64 MiB HTTP ceiling. An oversized page, including
+        an individual PDF too large after Base64 encoding, returns HTTP 413 response_too_large. Use an identity or a smaller
+        limit for multi-document pages.
+
+
+        A source-qualified identity lookup rejects duplicate identities and returns not_found when no declaration matches.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
+
+        | `id` | string | No | Source-qualified opaque declaration identity, not a numeric database ID. pattern: "^(tmtai\|itaxas):[A-Za-z0-9_-][A-Za-z0-9_.-]{0,127}$"
+        |
+
+        | `source` | string | No | Declaration source; part of its identity. enum: ["tmtai","itaxas"] |
+
+        | `uniqid` | string | No | Opaque declaration identity from the selected source. pattern: "^[A-Za-z0-9._-]+$"; maxLength:
+        128 |
+
+        | `year` | integer | No | Calendar year. minimum: 1000; maximum: 9999 |
+
+        | `month` | integer | No | Calendar month. minimum: 1; maximum: 12 |
+
+        | `quarter` | integer | No | Quarter, distinct from month. minimum: 1; maximum: 4 |
+
+        | `status` | string | No | Exact source status: do not collapse submitted, paid and settled states.  |
+
+        | `limit` | integer | No | Result limit; default 25. minimum: 1; maximum: 100 |
+
+        | `offset` | integer | No | Result offset; default 0. minimum: 0; maximum: 2147483647 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getCityTaxDeclarations?apid=123'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getCityTaxDeclarations
+        query:
+        - key: apid
+          value: '123'
+        - key: id
+          value: tmtai:example-declaration
+          disabled: true
+          description: Source-qualified opaque declaration identity, not a numeric database ID.
+    response: []
+- name: Users
+  description: Service users and property permissions.
+  item:
+  - name: getUsers
+    request:
+      method: GET
+      description: 'List service users of the authenticated account; exclude authentication data.
+
+
+        username is an alternative email selector; reject conflicting identities. Returns users, limit, offset and has_more.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `apid` | integer | No | Property ID belonging to the authenticated account.  |
+
+        | `email` | string | No | Email address. pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"; maxLength: 254 |
+
+        | `username` | string | No | Email address. pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"; maxLength: 254 |
+
+        | `limit` | integer | No | Result limit; default 25. minimum: 1; maximum: 100 |
+
+        | `offset` | integer | No | Result offset; default 0. minimum: 0; maximum: 2147483647 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      url:
+        raw: '{{baseUrl}}/getUsers'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - getUsers
+    response: []
+  - name: addUser
+    request:
+      method: POST
+      description: 'Create a service user with explicit property assignments; no automatic invitation is sent.
+
+
+        Validate property ownership and identity conflicts within the existing app rules. Existing administrator/service identities
+        are rejected.
+
+
+        Missing permissions grant nothing. No password or administrator role is accepted. Account context comes only from
+        authentication.
+
+
+        Use phone or contact, not both. Fiscal permissions must be managed in the application, not through this operation.
+
+
+        Only the authenticated account relationship may be changed. Confirm an uncertain write outcome before retrying.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `email` | string | Yes | Email address. pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"; maxLength: 254 |
+
+        | `name` | string | Yes | Service user display name. minLength: 1; maxLength: 255 |
+
+        | `phone` | string | No | Service contact phone. pattern: "^[0-9+() .-]{0,64}$" |
+
+        | `contact` | object | No |   |
+
+        | `contact.phone` | string | No | Service contact phone; alternative to the top-level phone. pattern: "^[0-9+() .-]{0,64}$"
+        |
+
+        | `language` | string | No | Existing app language code. pattern: "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$" |
+
+        | `property_ids` | array of integer | Yes | Explicit property assignments, replacing the account relationship only
+        when supplied. All IDs require ownership checks. maxItems: 100 |
+
+        | `permissions` | object | No |   |
+
+        | `permissions.open_reservations` | boolean | No | Existing service permission: open_reservations.  |
+
+        | `permissions.create_reservations` | boolean | No | Existing service permission: create_reservations.  |
+
+        | `permissions.change_reservations` | boolean | No | Existing service permission: change_reservations.  |
+
+        | `permissions.archive_reservations` | boolean | No | Existing service permission: archive_reservations.  |
+
+        | `permissions.financials_reservations` | boolean | No | Existing service permission: financials_reservations.  |
+
+        | `permissions.view_archive_reservations` | boolean | No | Existing service permission: view_archive_reservations.  |
+
+        | `permissions.change_handling` | boolean | No | Existing service permission: change_handling.  |
+
+        | `permissions.notes_reservations` | boolean | No | Existing service permission: notes_reservations.  |
+
+        | `permissions.view_guestdata` | boolean | No | Existing service permission: view_guestdata.  |
+
+        | `permissions.edit_columns` | boolean | No | Existing service permission: edit_columns.  |
+
+        | `permissions.view_expenses` | boolean | No | Existing service permission: view_expenses.  |
+
+        | `permissions.send_emails` | boolean | No | Existing service permission: send_emails.  |
+
+        | `permissions.checkin_emails` | boolean | No | Existing service permission: checkin_emails.  |
+
+        | `permissions.emails_360city` | boolean | No | Existing service permission: emails_360city.  |
+
+        | `permissions.view_stats` | boolean | No | Existing service permission: view_stats.  |
+
+        | `permissions.count_inventory` | boolean | No | Existing service permission: count_inventory.  |
+
+        | `permissions.add_inventory` | boolean | No | Existing service permission: add_inventory.  |
+
+        | `permissions.view_tmt_report` | boolean | No | Existing service permission: view_tmt_report.  |
+
+        | `permissions.view_attributed_only` | boolean | No | Existing service permission: view_attributed_only.  |
+
+        | `permissions.view_pmc_report` | boolean | No | Existing service permission: view_pmc_report.  |
+
+        | `permissions.calendar_reservations` | integer | No | Calendar permission: 0 none, 1 calendar, 2 calendar only. minimum:
+        0; maximum: 2 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/addUser'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - addUser
+      body:
+        mode: raw
+        raw: "{\n  \"email\": \"service@example.invalid\",\n  \"name\": \"Example Person\",\n  \"property_ids\": [\n    123\n\
+          \  ]\n}"
+        options:
+          raw:
+            language: json
+    response: []
+  - name: updateUser
+    request:
+      method: PATCH
+      description: 'Update the service user relationship identified by email; email itself cannot be changed.
+
+
+        Require an editable field besides email. Omitted fields/permissions remain unchanged; a supplied property_ids replaces
+        only this account assignment.
+
+
+        Use phone or contact, not both. Fiscal permissions stay managed in the application.
+
+
+        Shared-profile edits return conflict and must be managed in the app; account relationship permissions may be updated
+        independently.
+
+
+        Validate every property. Never modify another account relationship or grant administrator access.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `email` | string | Yes | Email address. pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"; maxLength: 254 |
+
+        | `name` | string | No | Service user display name. minLength: 1; maxLength: 255 |
+
+        | `phone` | string | No | Service contact phone. pattern: "^[0-9+() .-]{0,64}$" |
+
+        | `contact` | object | No |   |
+
+        | `contact.phone` | string | No | Service contact phone; alternative to the top-level phone. pattern: "^[0-9+() .-]{0,64}$"
+        |
+
+        | `language` | string | No | Existing app language code. pattern: "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$" |
+
+        | `property_ids` | array of integer | No | Explicit property assignments, replacing the account relationship only
+        when supplied. All IDs require ownership checks. maxItems: 100 |
+
+        | `permissions` | object | No |   |
+
+        | `permissions.open_reservations` | boolean | No | Existing service permission: open_reservations.  |
+
+        | `permissions.create_reservations` | boolean | No | Existing service permission: create_reservations.  |
+
+        | `permissions.change_reservations` | boolean | No | Existing service permission: change_reservations.  |
+
+        | `permissions.archive_reservations` | boolean | No | Existing service permission: archive_reservations.  |
+
+        | `permissions.financials_reservations` | boolean | No | Existing service permission: financials_reservations.  |
+
+        | `permissions.view_archive_reservations` | boolean | No | Existing service permission: view_archive_reservations.  |
+
+        | `permissions.change_handling` | boolean | No | Existing service permission: change_handling.  |
+
+        | `permissions.notes_reservations` | boolean | No | Existing service permission: notes_reservations.  |
+
+        | `permissions.view_guestdata` | boolean | No | Existing service permission: view_guestdata.  |
+
+        | `permissions.edit_columns` | boolean | No | Existing service permission: edit_columns.  |
+
+        | `permissions.view_expenses` | boolean | No | Existing service permission: view_expenses.  |
+
+        | `permissions.send_emails` | boolean | No | Existing service permission: send_emails.  |
+
+        | `permissions.checkin_emails` | boolean | No | Existing service permission: checkin_emails.  |
+
+        | `permissions.emails_360city` | boolean | No | Existing service permission: emails_360city.  |
+
+        | `permissions.view_stats` | boolean | No | Existing service permission: view_stats.  |
+
+        | `permissions.count_inventory` | boolean | No | Existing service permission: count_inventory.  |
+
+        | `permissions.add_inventory` | boolean | No | Existing service permission: add_inventory.  |
+
+        | `permissions.view_tmt_report` | boolean | No | Existing service permission: view_tmt_report.  |
+
+        | `permissions.view_attributed_only` | boolean | No | Existing service permission: view_attributed_only.  |
+
+        | `permissions.view_pmc_report` | boolean | No | Existing service permission: view_pmc_report.  |
+
+        | `permissions.calendar_reservations` | integer | No | Calendar permission: 0 none, 1 calendar, 2 calendar only. minimum:
+        0; maximum: 2 |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/updateUser'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - updateUser
+      body:
+        mode: raw
+        raw: "{\n  \"email\": \"service@example.invalid\",\n  \"name\": \"Example Person\"\n}"
+        options:
+          raw:
+            language: json
+    response: []

@@ -1,53 +1,19 @@
-# Hostkit API Postman
+# Hostkit API v2 for Postman
 
-This folder contains the Hostkit API collection file for Postman.
+Import `postman.yaml` into Postman to use the Hostkit API v2.
 
-- Private API documentation: https://hostkit.pt/api/
-- Public LLMs index: https://hostkit.pt/api/llms.txt
+Official documentation: [Hostkit API v2](https://docs.hostkit.pt/).
 
-For enhanced security, API keys are property based, therefore must be generated and maintained in the Hostkit App -> Properties -> API key tab of each property.
+## Setup
 
-A rate limiting is enforced, please check the API documentation for the current limit.
+1. Download `postman.yaml` from this repository.
+2. In Postman, select **Import** and choose the file.
+3. Open the **Hostkit API v2** collection variables.
+4. Set `apiKey` and `apiSecret` locally using credentials generated in Hostkit **My Account**.
+5. Keep `baseUrl` as `https://app.hostkit.pt/api/v2`.
 
-WARNING: Be very careful when using AI-generated or “vibe-coded” integrations. Hostkit is not responsible for API misuse, incorrect implementations, or unintended actions caused by third-party code.
+The collection generates a fresh timestamp, nonce and HMAC signature before each request. Do not manually set signature values. No separate environment is required.
 
-## Files
+Never commit or share real credentials. Review write operations before sending them; do not retry uncertain creations without checking the result.
 
-- `postman.yaml` - Postman-importable API collection for the public Hostkit API.
-
-## Import Into Postman
-
-1. Open Postman.
-2. Select **Import**.
-3. Choose `postman.yaml`.
-4. After import, set the `APIKEY` query auth value in the collection or request.
-
-## Authentication
-
-The API uses a query parameter named `APIKEY`.
-
-Example:
-
-```text
-https://app.hostkit.pt/api/getReservations?APIKEY=your-api-key&from_date=2026-01-01
-```
-
-Do not commit real API keys to GitHub.
-
-## Base URL
-
-The default server URL is:
-
-```text
-https://app.hostkit.pt/api
-```
-
-The collection file defines this as a `baseUrl` server variable so it can be changed in Postman if needed.
-
-## Validation
-
-The file is YAML and can be imported directly into Postman.
-
-## Changelog
-
-https://hostkit.pt/api/changelog.md
+For authentication, endpoints and troubleshooting, see the [Postman guide](https://docs.hostkit.pt/postman).
