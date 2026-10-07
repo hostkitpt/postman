@@ -1917,8 +1917,12 @@ item:
         unsupported or malformed documents are rejected.
 
 
-        Images are decoded and re-encoded as PNG; PDFs are rewritten before storage. Processing has time, memory and image-dimension
-        limits and fails closed if validation tools are unavailable.
+        PDF, JPG, JPEG and PNG files are sent to an external security service for Content Disarm and Reconstruction (CDR).
+        Only the approved, reconstructed PDF/A is stored; images are accepted but the stored content type is always application/pdf.
+
+
+        Both the original and reconstructed file must fit within 5 MiB. Unsafe files are rejected; timeouts, service failures
+        or incomplete security results reject the upload without storing the original or replacing the existing attachment.
 
 
         Store privately under a server-generated name, without execution permissions. Replace the existing attachment only
