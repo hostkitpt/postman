@@ -3713,6 +3713,11 @@ item:
         A source-qualified identity lookup rejects duplicate identities and returns not_found when no declaration matches.
 
 
+        Each declaration includes its saved number and multibanco: {entity, reference, amount}, or null when payment data
+        is missing or malformed. Both declaration sources are supported. Entity and reference are strings preserving leading
+        zeros; amount is a nonnegative decimal string with two decimal places and a dot separator.
+
+
         Parameters
 
 
