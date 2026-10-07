@@ -10,7 +10,7 @@ LLMs index: https://docs.hostkit.pt/llms.txt
 1. Download `postman.yaml` from this repository.
 2. In Postman, select **Import** and choose the file.
 3. Open the **Hostkit API v2** collection variables.
-4. Set `apiKey` and `apiSecret` locally using credentials generated in Hostkit **My Account**.
+4. Set `apiKey` and `apiSecret` locally using credentials generated in Hostkit -> My Account
 5. Keep `baseUrl` as `https://app.hostkit.pt/api/v2`.
 
 The collection generates a fresh timestamp, nonce and HMAC signature before each request. Do not manually set signature values. No separate environment is required.
