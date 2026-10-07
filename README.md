@@ -2,8 +2,8 @@
 
 Import `postman.yaml` into Postman to use the Hostkit API v2.
 
-Full documentation: https://docs.hostkit.pt
-LLMs index: https://docs.hostkit.pt/llms.txt
+- Full documentation: https://docs.hostkit.pt
+- LLMs index: https://docs.hostkit.pt/llms.txt
 
 ## Setup
 
