@@ -1913,8 +1913,8 @@ item:
         remain limited to 8192 bytes.
 
 
-        Verify expense/account/property ownership and the expenses module. Validate actual file content against its extension;
-        unsupported or malformed documents are rejected.
+        Verify expense/account/property ownership and the expenses module. Detect the initial file type from its bytes, then
+        require security validation; unsupported or malformed documents are rejected.
 
 
         PDF, JPG, JPEG and PNG files are sent to an external security service for Content Disarm and Reconstruction (CDR).
@@ -1925,8 +1925,8 @@ item:
         or incomplete security results reject the upload without storing the original or replacing the existing attachment.
 
 
-        Store privately under a server-generated name, without execution permissions. Replace the existing attachment only
-        after successful processing; original filenames never become filesystem paths.
+        No filename or content_type request parameter is accepted. Store privately under a server-generated name, without
+        execution permissions. Replace the existing attachment only after successful processing.
 
 
         Uploading an attachment does not parse QR codes, change expense lines/totals, or fetch a client URL.
@@ -1943,11 +1943,8 @@ item:
 
         | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
 
-        | `filename` | string | Yes | Original filename; PDF, JPG, JPEG or PNG only. No directory paths. pattern: "^[A-Za-z0-9][A-Za-z0-9
-        ._-]*\\.(pdf\|jpg\|jpeg\|png\|PDF\|JPG\|JPEG\|PNG)$"; minLength: 1; maxLength: 128 |
-
-        | `content_base64` | string | Yes | Canonical Base64 of the file bytes, without whitespace or a data URI. minLength:
-        4; maxLength: 6990508 |'
+        | `content_base64` | string | Yes | Canonical Base64 of PDF, JPG, JPEG or PNG bytes, without whitespace or a data
+        URI. The file type is detected from its content; no filename is supplied. minLength: 4; maxLength: 6990508 |'
       header:
       - key: Accept
         value: application/json
@@ -1973,8 +1970,7 @@ item:
         - uploadExpenseFile
       body:
         mode: raw
-        raw: "{\n  \"apid\": 123,\n  \"id\": 1,\n  \"filename\": \"expense.pdf\",\n  \"content_base64\": \"JVBERi0xLjQKJSBFeGFtcGxlIG9ubHkK\"\
-          \n}"
+        raw: "{\n  \"apid\": 123,\n  \"id\": 1,\n  \"content_base64\": \"JVBERi0xLjQKJSBFeGFtcGxlIG9ubHkK\"\n}"
         options:
           raw:
             language: json
