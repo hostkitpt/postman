@@ -30,68 +30,79 @@ info:
     \ SHA-256 hex; GET hashes the empty body. Timestamp: UTC YYYY-MM-DDTHH:mm:ssZ; nonce: UUID v4.\n\nThe timestamp must be\
     \ within five minutes of the server clock. A nonce cannot be reused. Invalid or expired authentication returns HTTP 401.\n\
     \nGenerated code snippets containing only `X-API-Key` are incomplete: clients outside Postman must also implement HMAC\
-    \ signing.\n\n## Rate Limit\n\nThe API rate limit is **100 requests per minute**, the same as API v1. If you need a higher\
-    \ limit, contact [Hostkit support](https://hostkit.pt/suporte/). Avoid repeated polling and uncontrolled parallel requests;\
-    \ reuse previously retrieved data where appropriate.\n\nIf you receive HTTP 429 from the gateway, wait for the period\
-    \ indicated by `Retry-After`, when present, before retrying. Otherwise use exponential backoff with jitter. Every retry\
-    \ must have a fresh timestamp, nonce and signature. Confirm the outcome of write requests before retrying; repeated writes\
-    \ can create duplicates.\n\nRequest size, batch size and pagination limits are documented below and are separate from\
-    \ request frequency limits.\n\n## Requests\n\nGET reads data using URL query parameters, without a body. POST creates,\
-    \ PATCH edits and DELETE deletes using a UTF-8 JSON object body, with no business query parameters. The maximum raw body\
-    \ size is **8192 bytes**. Unknown fields and duplicate query parameters are rejected.\n\nIDs, years and months are integers.\
-    \ Money is decimal text. Write booleans are JSON `true` or `false`; GET booleans use exactly `true` or `false`. GET integers\
-    \ use plain decimal text without fractions or exponent notation. Omitted update fields are preserved.\n\nAn API key identifies\
-    \ one account. Property operations require `apid` belonging to that account. Fiscal operations require an authorized `invoicing_nif`;\
-    \ reservation references also require `apid`. Available operations depend on your account permissions, license and enabled\
-    \ modules.\n\n`addExpense` and `addInvoice` accept optional atomic batches of lines; `addInvoiceLines` adds a batch to\
-    \ an existing draft. Batches contain at most 20 lines and must fit the body size limit. Invoice closing is always explicit.\n\
-    \n### Reservation filters\n\nIdentity and list filters cannot be combined: rcode/CM selectors reject from_date, to_date,\
-    \ reservation_date, date_filter, room, provider, language and nif rather than ignoring them. Invalid combinations return\
-    \ HTTP 422. Incomplete or conflicting channel-manager selectors are also rejected.\n\nDate listing intersects supplied\
-    \ filters; it is not an overlap search. Without `date_filter`, `from_date` constrains check-in and `to_date` constrains\
-    \ checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`, both boundaries apply to that date and include\
-    \ the selected end day.\n\n### Retries\n\nThe API does not deduplicate write requests or replay stored responses. After\
-    \ a timeout or uncertain result, check application state before retrying a write. Repeating a creation request can create\
-    \ another resource. Each retry requires a fresh timestamp, nonce and signature.\n\n## Key permissions\n\nAccounts may\
-    \ have up to five API keys, each with read-only or read/write access. Every key can read; write access is optional and\
-    \ new keys default to read-only. There are no write-only keys. Keys exist until deleted; deleting a key frees a slot.\
-    \ GET operations require read, except getKeycode which can create a lock code and requires write. POST/PATCH/DELETE require\
-    \ write. Missing permission returns HTTP 403 permission_denied before dispatch. IP whitelist rules remain account-wide.\n\
-    \n## Responses\n\nSuccessful responses contain `status: \"success\"`, `data` and `meta.request_id`. Each documented response\
-    \ data schema describes `data`, not the envelope root. POST `add*` operations return HTTP 201; other successful operations\
-    \ return HTTP 200.\n\nNo cursor pagination is provided. City-tax declarations and service users support their documented\
-    \ `limit` and `offset` parameters.\n\n## Errors\n\nErrors contain `status: \"failure\"`, `error.code`, `error.message`,\
-    \ optional `error.field` and `meta.request_id`. HTTP errors include 400, 401, 403, 404, 405, 409, 413, 415, 422, 500,\
-    \ 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\n| HTTP status | Description |\n| --- | ---\
-    \ |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid, expired or replayed authentication. |\n\
-    | 403 | API key read/write permission, account/property/NIF authorization, license, module or IP restriction. |\n| 404\
-    \ | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies the required method. |\n| 409\
-    \ | Identity, shared-profile or resource-state conflict. |\n| 413 | Raw body exceeds 8192 bytes, or inline city-tax documents\
-    \ exceed the response limit. |\n| 415 | Unsupported request media type. |\n| 422 | Typed schema validation failed. |\n\
-    | 500 | Internal error; internal details are not exposed. |\n| 501 | Requested source capability is unsupported, including\
-    \ remote iTaxas PDF delivery. |\n| 503 | Required handler, contract, transactional table or service is unavailable. |\n\
-    | 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance. |\n\n```json\n{\"status\":\"failure\"\
-    ,\"error\":{\"code\":\"permission_denied\",\"message\":\"API key does not have the required permission\"},\"meta\":{\"\
-    request_id\":\"example-request-id\"}}\n```\n\n## Enumerations\n\nSend these request values exactly as listed. Defaults\
-    \ and required fields remain defined by each endpoint.\n\n### Properties license types\n\n| Value | Description |\n| ---\
-    \ | --- |\n| `RNAL` | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL` | Regional short-term rental |\n\
-    \n### Properties typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio |\n| `T1` | 1 bedroom |\n| `T2`\
-    \ | 2 bedrooms |\n| `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n| `T6` | 6 bedrooms |\n| `NA` |\
-    \ Other |\n\n### Reservation date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin` | Check-in date |\n|\
-    \ `checkout` | Checkout date |\n\n### Guest document types\n\n| Value | Description |\n| --- | --- |\n| `P` | Passport\
-    \ |\n| `B` | Identity card |\n| `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n| `Passaporte` | Passport\
-    \ |\n| `Passport` | Passport |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation extra types\n\n\
-    | Value | Description |\n| --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock providers\n\
-    \n| Value | Description |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n| `salto` |\
-    \ Salto |\n| `omnitec` | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY |\n\n###\
-    \ Expense documents\n\n| Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note |\n\n\
-    ### Expense types\n\n| Value | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable expense\
-    \ |\n\n### Invoice types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n\n\
-    ### Series document types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n\
-    | `RG` | Receipt |\n\n### Fiscal regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n| `PT-MA`\
-    \ | Madeira |\n| `PT-AC` | Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n| `ARREND`\
-    \ | Lease |\n| `SUBARR` | Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE` |\
-    \ Machinery rental |\n\n### Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent\
+    \ signing.\n\n## IP Whitelisting\n\nIP whitelisting is supported in API v2. It uses the same account-wide allowlist as\
+    \ API v1 and applies to every API key belonging to that account.\n\n- With no entries configured, source IP is not restricted.\
+    \ API key and HMAC authentication are still mandatory.\n- Once an entry exists, requests must match at least one allowed\
+    \ IPv4 address or IPv4 CIDR range.\n- IPv6 is not currently supported. With an allowlist configured, addresses that do\
+    \ not match an IPv4 entry are rejected.\n\nManage addresses and ranges in Hostkit **My Account \u2192 Hostkit API IP whitelist**.\
+    \ Entries can have descriptive names. For example, `198.51.100.42` permits one address and `198.51.100.0/24` permits that\
+    \ IPv4 network. Add all outbound addresses used by the integration before enabling restrictions.\n\nA request from an\
+    \ address outside the allowlist returns **HTTP 403** with `error.code: \"ip_not_allowed\"`, before the endpoint is executed:\n\
+    \n```json\n{\"status\":\"failure\",\"error\":{\"code\":\"ip_not_allowed\",\"message\":\"IP address not allowed\"},\"meta\"\
+    :{\"request_id\":\"example-request-id\"}}\n```\n\nThe last access value of each matching entry is updated as a Unix timestamp\
+    \ after successful authentication and IP authorization. Rejected addresses do not update last access. IP whitelisting\
+    \ supplements API key and HMAC authentication; it does not replace either.\n\n## Rate Limit\n\nThe API rate limit is **100\
+    \ requests per minute**, the same as API v1. If you need a higher limit, contact [Hostkit support](https://hostkit.pt/suporte/).\
+    \ Avoid repeated polling and uncontrolled parallel requests; reuse previously retrieved data where appropriate.\n\nIf\
+    \ you receive HTTP 429 from the gateway, wait for the period indicated by `Retry-After`, when present, before retrying.\
+    \ Otherwise use exponential backoff with jitter. Every retry must have a fresh timestamp, nonce and signature. Confirm\
+    \ the outcome of write requests before retrying; repeated writes can create duplicates.\n\nRequest size, batch size and\
+    \ pagination limits are documented below and are separate from request frequency limits.\n\n## Requests\n\nGET reads data\
+    \ using URL query parameters, without a body. POST creates, PATCH edits and DELETE deletes using a UTF-8 JSON object body,\
+    \ with no business query parameters. The maximum raw body size is **8192 bytes**. Unknown fields and duplicate query parameters\
+    \ are rejected.\n\nIDs, years and months are integers. Money is decimal text. Write booleans are JSON `true` or `false`;\
+    \ GET booleans use exactly `true` or `false`. GET integers use plain decimal text without fractions or exponent notation.\
+    \ Omitted update fields are preserved.\n\nAn API key identifies one account. Property operations require `apid` belonging\
+    \ to that account. Fiscal operations require an authorized `invoicing_nif`; reservation references also require `apid`.\
+    \ Available operations depend on your account permissions, license and enabled modules.\n\n`addExpense` and `addInvoice`\
+    \ accept optional atomic batches of lines; `addInvoiceLines` adds a batch to an existing draft. Batches contain at most\
+    \ 20 lines and must fit the body size limit. Invoice closing is always explicit.\n\n### Reservation filters\n\nIdentity\
+    \ and list filters cannot be combined: rcode/CM selectors reject from_date, to_date, reservation_date, date_filter, room,\
+    \ provider, language and nif rather than ignoring them. Invalid combinations return HTTP 422. Incomplete or conflicting\
+    \ channel-manager selectors are also rejected.\n\nDate listing intersects supplied filters; it is not an overlap search.\
+    \ Without `date_filter`, `from_date` constrains check-in and `to_date` constrains checkout at midnight. With `date_filter=checkin`\
+    \ or `date_filter=checkout`, both boundaries apply to that date and include the selected end day.\n\n### Retries\n\nThe\
+    \ API does not deduplicate write requests or replay stored responses. After a timeout or uncertain result, check application\
+    \ state before retrying a write. Repeating a creation request can create another resource. Each retry requires a fresh\
+    \ timestamp, nonce and signature.\n\n## Key permissions\n\nAccounts may have up to five API keys, each with read-only\
+    \ or read/write access. Every key can read; write access is optional and new keys default to read-only. There are no write-only\
+    \ keys. Keys exist until deleted; deleting a key frees a slot. GET operations require read, except getKeycode which can\
+    \ create a lock code and requires write. POST/PATCH/DELETE require write. Missing permission returns HTTP 403 permission_denied\
+    \ before dispatch. IP whitelist rules remain account-wide.\n\n## Responses\n\nSuccessful responses contain `status: \"\
+    success\"`, `data` and `meta.request_id`. Each documented response data schema describes `data`, not the envelope root.\
+    \ POST `add*` operations return HTTP 201; other successful operations return HTTP 200.\n\nNo cursor pagination is provided.\
+    \ City-tax declarations and service users support their documented `limit` and `offset` parameters.\n\n## Errors\n\nErrors\
+    \ contain `status: \"failure\"`, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP errors\
+    \ include 400, 401, 403, 404, 405, 409, 413, 415, 422, 500, 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\
+    \n| HTTP status | Description |\n| --- | --- |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid,\
+    \ expired or replayed authentication. |\n| 403 | API key read/write permission, account/property/NIF authorization, license,\
+    \ module or IP restriction. |\n| 404 | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies\
+    \ the required method. |\n| 409 | Identity, shared-profile or resource-state conflict. |\n| 413 | Raw body exceeds 8192\
+    \ bytes, or inline city-tax documents exceed the response limit. |\n| 415 | Unsupported request media type. |\n| 422 |\
+    \ Typed schema validation failed. |\n| 500 | Internal error; internal details are not exposed. |\n| 501 | Requested source\
+    \ capability is unsupported, including remote iTaxas PDF delivery. |\n| 503 | Required handler, contract, transactional\
+    \ table or service is unavailable. |\n| 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance.\
+    \ |\n\n```json\n{\"status\":\"failure\",\"error\":{\"code\":\"permission_denied\",\"message\":\"API key does not have\
+    \ the required permission\"},\"meta\":{\"request_id\":\"example-request-id\"}}\n```\n\n## Enumerations\n\nSend these request\
+    \ values exactly as listed. Defaults and required fields remain defined by each endpoint.\n\n### Properties license types\n\
+    \n| Value | Description |\n| --- | --- |\n| `RNAL` | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL`\
+    \ | Regional short-term rental |\n\n### Properties typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio\
+    \ |\n| `T1` | 1 bedroom |\n| `T2` | 2 bedrooms |\n| `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n\
+    | `T6` | 6 bedrooms |\n| `NA` | Other |\n\n### Reservation date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin`\
+    \ | Check-in date |\n| `checkout` | Checkout date |\n\n### Guest document types\n\n| Value | Description |\n| --- | ---\
+    \ |\n| `P` | Passport |\n| `B` | Identity card |\n| `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n\
+    | `Passaporte` | Passport |\n| `Passport` | Passport |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation\
+    \ extra types\n\n| Value | Description |\n| --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock\
+    \ providers\n\n| Value | Description |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n\
+    | `salto` | Salto |\n| `omnitec` | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY\
+    \ |\n\n### Expense documents\n\n| Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note\
+    \ |\n\n### Expense types\n\n| Value | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable\
+    \ expense |\n\n### Invoice types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice\
+    \ |\n\n### Series document types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice\
+    \ |\n| `RG` | Receipt |\n\n### Fiscal regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n\
+    | `PT-MA` | Madeira |\n| `PT-AC` | Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n|\
+    \ `ARREND` | Lease |\n| `SUBARR` | Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE`\
+    \ | Machinery rental |\n\n### Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent\
     \ housing |\n| `H_NPER` | Non-permanent housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description\
     \ |\n| --- | --- |\n| `MENSAL` | Monthly |\n| `MENORM` | Less than one month |\n\n### City tax sources\n\n| Value | Description\
     \ |\n| --- | --- |\n| `tmtai` | Hostkit City Tax |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\
