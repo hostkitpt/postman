@@ -23,6 +23,14 @@ Never commit or share real credentials. Review write operations before sending t
 
 Invoices remain drafts until explicitly finalized with `closeInvoice`. Separate line-creation endpoints are not available in API v2.
 
+## Invoicing
+
+Customer requests list, create and delete customers. Deletion is refused when any fiscal document, including a draft, references the customer.
+
+Current Account requests return period transactions and opening/closing balances, and manage unlinked manual transactions only. Dates use Unix seconds and amounts use decimal strings.
+
+`addModelo30Transaction` creates a one-period (`U`) or recurring (`R`) transaction, without generating or submitting a declaration.
+
 ## Disclaimer
 
 Hostkit is not responsible for API misuse, incorrect implementations or unintended actions caused by third-party code.
