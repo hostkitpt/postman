@@ -181,37 +181,38 @@ info:
     \ | Maintenance (Manuten\xE7\xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xED\
     lios) |\n| `13` | Utilities (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos)\
     \ |\n| `16` | Legal (Jur\xEDdico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1\
-    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- `deleteExpense`\
-    \ also removes its locally stored attachment; confirmed failures restore it and uncertain outcomes require reconciliation.\
-    \ New expenses cannot inherit retained attachments.\n- Expense vendor names, document numbers and descriptions accept\
-    \ legitimate punctuation, including apostrophes.\n- Improve JSON HTTP 413 responses for rejected request bodies without\
-    \ increasing endpoint size limits.\n- Added `getCustomers`, `addCustomer` and `deleteCustomer`; customers with associated\
-    \ documents cannot be deleted.\n- Added `getCurrentAccount` with complete-period opening/closing balances and paginated\
-    \ transactions. Manual unlinked transactions can be created, updated and deleted through the dedicated endpoints.\n- Added\
-    \ `addModelo30Transaction` for monthly and recurring manual transactions; generation and submission remain separate actions.\n\
-    - `addExpense` and `addInvoice` now require 1 to 20 `lines` in the creation request. Any line failure rolls back the document\
-    \ and all lines. Invoices remain drafts until `closeInvoice`.\n- Removed the separate `addExpenseLine`, `addInvoiceLine`\
-    \ and `addInvoiceLines` endpoints from API v2. Create each document and its lines together; API v1 is unchanged.\n- Added\
-    \ correlated auditing of authorized writes and explicit `commit_uncertain` errors.\n- Strengthened guest validation, SIBA\
-    \ document handling and account-specific SAF-T generation.\n- Serialized receipt, credit-note, guest, expense-line and\
-    \ reservation-extra writes to prevent duplicate or partial changes.\n- Preserve previous expense attachments and SAF-T\
-    \ exports on confirmed failed replacement; uncertain commits require reconciliation instead of automatic restoration or\
-    \ retry.\n- New rental-contract references are unique and opaque, independent of draft deletion.\n\n### 2026-10-07\n\n\
-    - Added `uploadExpenseFile` for PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded file. This endpoint\
-    \ alone accepts a raw JSON body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract` and `deleteRentalContract`\
-    \ for draft contracts. Submission activates a contract only after confirmed AT acceptance; uncertain results require reconciliation\
-    \ before retrying.\n- `getCityTaxDeclarations` searches both declaration sources without `source`, `apid` or `id` request\
-    \ parameters. `uniqid` searches both sources; `license_number` also matches complete members of merged declarations.\n\
-    - Removed `getExpenseCategories`; category IDs remain documented in Enumerations.\n\n### 2.0.0\n\n- Account-wide API keys\
-    \ with mandatory HMAC-SHA256 authentication and read-only or read/write permissions. Existing account IP whitelist rules\
-    \ also apply to v2.\n- GET query filters for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain\
-    \ write outcomes before retrying; repeated writes are not deduplicated.\n- Consolidated reads: `getReservations` can select\
-    \ one reservation; `getProperties` can select one property. Expenses, invoices, credit notes, receipts and rental contracts\
-    \ support individual selectors.\n- Invoicing configuration, series, products and Modelo 30 operations; service-user creation\
-    \ and updates.\n- `getCityTaxDeclarations` includes a local PDF as Base64 in `document`, or null when unavailable; there\
-    \ is no separate document endpoint.\n- Mintlify reference, downloadable Postman collection with automatic HMAC signing,\
-    \ cURL examples and Markdown documentation for LLMs.\n\nAPI v1 remains separate and available; v2 does not change the\
-    \ v1 request format.\n"
+    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- Added `submitCityTaxDeclaration`\
+    \ for completed monthly or quarterly periods, requiring a matching existing city-tax agent configuration. Duplicate declarations\
+    \ and unresolved submission outcomes block further attempts.\n- `deleteExpense` also removes its locally stored attachment;\
+    \ confirmed failures restore it and uncertain outcomes require reconciliation. New expenses cannot inherit retained attachments.\n\
+    - Expense vendor names, document numbers and descriptions accept legitimate punctuation, including apostrophes.\n- Improve\
+    \ JSON HTTP 413 responses for rejected request bodies without increasing endpoint size limits.\n- Added `getCustomers`,\
+    \ `addCustomer` and `deleteCustomer`; customers with associated documents cannot be deleted.\n- Added `getCurrentAccount`\
+    \ with complete-period opening/closing balances and paginated transactions. Manual unlinked transactions can be created,\
+    \ updated and deleted through the dedicated endpoints.\n- Added `addModelo30Transaction` for monthly and recurring manual\
+    \ transactions; generation and submission remain separate actions.\n- `addExpense` and `addInvoice` now require 1 to 20\
+    \ `lines` in the creation request. Any line failure rolls back the document and all lines. Invoices remain drafts until\
+    \ `closeInvoice`.\n- Removed the separate `addExpenseLine`, `addInvoiceLine` and `addInvoiceLines` endpoints from API\
+    \ v2. Create each document and its lines together; API v1 is unchanged.\n- Added correlated auditing of authorized writes\
+    \ and explicit `commit_uncertain` errors.\n- Strengthened guest validation, SIBA document handling and account-specific\
+    \ SAF-T generation.\n- Serialized receipt, credit-note, guest, expense-line and reservation-extra writes to prevent duplicate\
+    \ or partial changes.\n- Preserve previous expense attachments and SAF-T exports on confirmed failed replacement; uncertain\
+    \ commits require reconciliation instead of automatic restoration or retry.\n- New rental-contract references are unique\
+    \ and opaque, independent of draft deletion.\n\n### 2026-10-07\n\n- Added `uploadExpenseFile` for PDF, JPG, JPEG and PNG\
+    \ documents sent as Base64, up to 5 MiB per decoded file. This endpoint alone accepts a raw JSON body up to 7 MiB.\n-\
+    \ Added `updateRentalContract`, `submitRentalContract` and `deleteRentalContract` for draft contracts. Submission activates\
+    \ a contract only after confirmed AT acceptance; uncertain results require reconciliation before retrying.\n- `getCityTaxDeclarations`\
+    \ searches both declaration sources without `source`, `apid` or `id` request parameters. `uniqid` searches both sources;\
+    \ `license_number` also matches complete members of merged declarations.\n- Removed `getExpenseCategories`; category IDs\
+    \ remain documented in Enumerations.\n\n### 2.0.0\n\n- Account-wide API keys with mandatory HMAC-SHA256 authentication\
+    \ and read-only or read/write permissions. Existing account IP whitelist rules also apply to v2.\n- GET query filters\
+    \ for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain write outcomes before retrying; repeated\
+    \ writes are not deduplicated.\n- Consolidated reads: `getReservations` can select one reservation; `getProperties` can\
+    \ select one property. Expenses, invoices, credit notes, receipts and rental contracts support individual selectors.\n\
+    - Invoicing configuration, series, products and Modelo 30 operations; service-user creation and updates.\n- `getCityTaxDeclarations`\
+    \ includes a local PDF as Base64 in `document`, or null when unavailable; there is no separate document endpoint.\n- Mintlify\
+    \ reference, downloadable Postman collection with automatic HMAC signing, cURL examples and Markdown documentation for\
+    \ LLMs.\n\nAPI v1 remains separate and available; v2 does not change the v1 request format.\n"
   schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 auth:
   type: apikey
@@ -4185,6 +4186,84 @@ item:
           value: example-declaration
           disabled: true
           description: Opaque declaration identity from the selected source.
+    response: []
+  - name: submitCityTaxDeclaration
+    request:
+      method: POST
+      description: 'Submit a city-tax declaration for a completed period using the registration''s existing agent configuration.
+
+
+        Requires an existing, active city-tax agent and complete provider credentials. The API never creates or changes agent
+        configuration. Monthly requests require configured period 1; quarterly requests require period 2. A mismatch returns
+        HTTP 409 period_mismatch before submission.
+
+
+        The registration and every member of a merged declaration must belong to the authenticated account, have active properties
+        and the city-tax module enabled. Conflicting providers or group configurations are rejected. No apid, source selector
+        or municipal credentials are accepted.
+
+
+        The declared period must have ended. Calculations and configured grouping follow the application submission flow.
+        Selecting a merged member submits the entire configured group, not a separate declaration.
+
+
+        Existing declarations for the registration/group and period return HTTP 409 declaration_exists. Another account submission
+        in progress returns operation_in_progress. Do not run a manual application submission concurrently with this operation.
+
+
+        Returns the saved uniqid, source, license_number, year, month and status. submitted means accepted for processing;
+        municipal submission can still be pending, and it does not mean paid or settled. Poll getCityTaxDeclarations using
+        uniqid for the current declaration state.
+
+
+        An uncertain external or persistence outcome returns HTTP 503 citytax_submission_uncertain. A later attempt is blocked
+        with submission_reconciliation_required until the outcome is reconciled. Never automatically repeat a submission after
+        a timeout or uncertain response.
+
+
+        Parameters
+
+
+        | Field | Type | Required | Description / constraints |
+
+        | --- | --- | --- | --- |
+
+        | `license_number` | string | Yes | One numeric registration number configured in the authenticated account. pattern:
+        "^[0-9]+$"; maxLength: 128 |
+
+        | `year` | integer | Yes | Calendar year. minimum: 1000; maximum: 9999 |
+
+        | `month` | string | Yes | Declared month ("9" or "09") or quarter ("1T", "2T", "3T", "4T"); not the sending month.
+        pattern: "^(0?[1-9]\|1[0-2]\|[1-4]T)$" |'
+      header:
+      - key: Accept
+        value: application/json
+      - key: X-API-Key
+        value: '{{apiKey}}'
+        description: Set apiKey locally; never share the real value.
+      - key: X-Timestamp
+        value: '{{apiTimestamp}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Nonce
+        value: '{{apiNonce}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: X-Signature
+        value: '{{apiSignature}}'
+        description: Generated locally by the collection HMAC pre-request script for each request.
+      - key: Content-Type
+        value: application/json
+      url:
+        raw: '{{baseUrl}}/submitCityTaxDeclaration'
+        host:
+        - '{{baseUrl}}'
+        path:
+        - submitCityTaxDeclaration
+      body:
+        mode: raw
+        raw: "{\n  \"license_number\": \"12345\",\n  \"year\": 2026,\n  \"month\": \"09\"\n}"
+        options:
+          raw:
+            language: json
     response: []
 - name: Users
   description: Service users and property permissions.
