@@ -118,86 +118,93 @@ info:
     \ Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE` | Machinery rental |\n\n###\
     \ Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent housing |\n| `H_NPER` | Non-permanent\
     \ housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description |\n| --- | --- |\n| `MENSAL`\
-    \ | Monthly |\n| `MENORM` | Less than one month |\n\n### City tax sources\n\n| Value | Description |\n| --- | --- |\n\
-    | `tmtai` | Hostkit City Tax |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\n| Value |\n| --- |\n\
-    | `9flats` |\n| `abreu` |\n| `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago` |\n| `atraveo` |\n\
-    | `belvilla` |\n| `blueground` |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info` |\n| `campspace`\
-    \ |\n| `clickstay` |\n| `corporate` |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n| `edreams` |\n|\
-    \ `email` |\n| `eurofun` |\n| `eurohike` |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com` |\n| `google`\
-    \ |\n| `hometogo` |\n| `hostelworld` |\n| `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip` |\n\
-    | `hrs` |\n| `inntravel` |\n| `jetcamp` |\n| `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere`\
-    \ |\n| `muchosol` |\n| `mycamper` |\n| `odisseias` |\n| `olimar` |\n| `oliverstravels` |\n| `oyo` |\n| `phone` |\n| `pincamp`\
-    \ |\n| `pitchup` |\n| `plumguide` |\n| `profitroom` |\n| `roomarama` |\n| `scapetravel` |\n| `seabreeze` |\n| `solmar`\
-    \ |\n| `spotahome` |\n| `splvillas` |\n| `stsurleshauteurs` |\n| `traum` |\n| `travelagency` |\n| `travelagent` |\n| `travelstaytion`\
-    \ |\n| `trip.com` |\n| `tripadvisor` |\n| `uniplaces` |\n| `villacollection` |\n| `villamore` |\n| `villaplus` |\n| `vintage`\
-    \ |\n| `vistaverde` |\n| `voucher` |\n| `vrbo` |\n| `walkin` |\n| `website` |\n| `wolters` |\n| `wix` |\n\n### Invoices\
-    \ sources\n\n| Value | Description |\n| --- | --- |\n| `api` | API invoices (faturas via API) |\n| `automatic` | Automatic\
-    \ invoices (faturas autom\xE1ticas) |\n| `bulk` | Bulk invoices (faturas geradas em massa) |\n| `pmc` | Property management\
-    \ invoices (faturas de comiss\xF5es de gest\xE3o) |\n| `manual` | Manual invoices (faturas manuais) |\n\n### Invoices\
-    \ payment methods\n\n| Value | Description |\n| --- | --- |\n| `CC` | Credit card (Cart\xE3o cr\xE9dito) |\n| `CD` | Debit\
-    \ card (Cart\xE3o d\xE9bito) |\n| `CH` | Bank check (Cheque banc\xE1rio) |\n| `CI` | International documentary credit\
-    \ (Cr\xE9dito document\xE1rio internacional) |\n| `CO` | Cheque or gift card (Cheque ou cart\xE3o oferta) |\n| `CS` |\
-    \ Clearing of current account balances (Compensa\xE7\xE3o de saldos em conta corrente) |\n| `DE` | Electronic money (Dinheiro\
-    \ eletr\xF3nico) |\n| `LC` | Commercial bills (Letra comercial) |\n| `MB` | ATM (Multibanco) |\n| `NU` | Cash (Numer\xE1\
-    rio) |\n| `PR` | Exchange of goods (Permuta de bens) |\n| `TB` | Bank transfer or authorised direct debit (Transfer\xEA\
-    ncia banc\xE1ria ou d\xE9bito direto autorizado) |\n| `OU` | Other means not listed here (Outros meios aqui n\xE3o assinalados)\
-    \ |\n\n### Invoicing product VAT exemption codes\n\n| Value | Description |\n| --- | --- |\n| `M01` | Article 16, nr.\
-    \ 6 of CIVA (Artigo 16.\xBA n.\xBA 6 do CIVA) |\n| `M02` | Article 6 of Decree-Law 198/90 of 19 June (Artigo 6.\xBA do\
-    \ Decreto-Lei n.\xBA 198/90, de 19 de Junho) |\n| `M03` | Cash requirement (Exigibilidade de caixa) |\n| `M04` | Exempt\
-    \ Article 13 of CIVA (Isento Artigo 13.\xBA do CIVA) |\n| `M05` | Exempt Article 14 of CIVA (Isento Artigo 14.\xBA do\
-    \ CIVA) |\n| `M06` | Exempt Article 15 of CIVA (Isento Artigo 15.\xBA do CIVA) |\n| `M07` | Exempt Article 9 of CIVA (Isento\
-    \ Artigo 9.\xBA do CIVA) |\n| `M09` | VAT no right to deduction (IVA n\xE3o confere direito a dedu\xE7\xE3o) |\n| `M10`\
-    \ | VAT exemption scheme (IVA regime de isen\xE7\xE3o) |\n| `M11` | Special tobacco regime (Regime particular do tabaco)\
-    \ |\n| `M12` | Profit margin scheme, travel agencies (Regime da margem de lucro, ag\xEAncias de viagens) |\n| `M13` |\
-    \ Profit margin scheme, second-hand goods (Regime da margem de lucro, bens em segunda m\xE3o) |\n| `M14` | Profit margin\
-    \ scheme, works of art (Regime da margem de lucro, objectos de arte) |\n| `M15` | Profit margin scheme, collectors' items\
-    \ and antiques (Regime da margem de lucro, objectos de colec\xE7\xE3o e antiguidades) |\n| `M16` | Exempt Article 14 of\
-    \ the RITI (Isento Artigo 14.\xBA do RITI) |\n| `M19` | Other exemptions (Outras isen\xE7\xF5es) |\n| `M20` | VAT flat-rate\
-    \ scheme (IVA regime forfet\xE1rio) |\n| `M21` | VAT no right to deduction or similar expression (IVA n\xE3o confere direito\
-    \ \xE0 dedu\xE7\xE3o ou express\xE3o similar) |\n| `M25` | Goods on consignment (Mercadorias \xE0 consigna\xE7\xE3o) |\n\
-    | `M26` | VAT exemption with right of deduction on food baskets (Isen\xE7\xE3o de IVA com direito \xE0 dedu\xE7\xE3o no\
-    \ cabaz alimentar) |\n| `M30` | VAT reverse charge, Article 2, nr. 1, line i of CIVA (IVA autoliquida\xE7\xE3o, Artigo\
-    \ 2.\xBA n.\xBA 1 al\xEDnea i do CIVA) |\n| `M31` | VAT reverse charge, Article 2, nr. 1, line j of CIVA (IVA autoliquida\xE7\
-    \xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea j do CIVA) |\n| `M32` | VAT reverse charge, Article 2, nr. 1, line l of CIVA (IVA\
-    \ autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea l do CIVA) |\n| `M33` | VAT reverse charge, Article 2, nr. 1,\
-    \ line m of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea m do CIVA) |\n| `M34` | VAT reverse charge,\
-    \ Article 2, nr. 1, line n of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea n do CIVA) |\n| `M40` |\
-    \ VAT reverse charge, Article 6, nr. 6, line a of CIVA to the contrary (IVA autoliquida\xE7\xE3o, Artigo 6.\xBA n.\xBA\
-    \ 6 al\xEDnea a do CIVA, a contr\xE1rio) |\n| `M41` | VAT reverse charge, Article 8, nr. 3 of CIVA (IVA autoliquida\xE7\
-    \xE3o, Artigo 8.\xBA n.\xBA 3 do CIVA) |\n| `M42` | VAT reverse charge, Decree-Law no. 21/2007, of 29 January (IVA autoliquida\xE7\
-    \xE3o, Decreto-Lei n.\xBA 21/2007, de 29 de janeiro) |\n| `M43` | VAT reverse charge, Decree-Law no. 362/99, of 16th September\
-    \ (IVA autoliquida\xE7\xE3o, Decreto-Lei n.\xBA 362/99, de 16 de setembro) |\n| `M44` | Specific Rules, Article 6 of RITI\
-    \ (Regras espec\xEDficas, artigo 6.\xBA do CIVA) |\n| `M45` | Cross-border exemption scheme (Regime transfronteiri\xE7\
-    o de isen\xE7\xE3o) |\n| `M46` | e-TaxFree |\n| `M99` | Not subject, not taxed (N\xE3o sujeito, n\xE3o tributado) |\n\n\
-    ### Expenses categories\n\n| Value | Description |\n| --- | --- |\n| `1` | Consumables (Consum\xEDveis) |\n| `2` | Decoration\
-    \ (Decora\xE7\xE3o) |\n| `3` | Electronics (Eletr\xF3nica) |\n| `4` | Furniture (Mobili\xE1rio) |\n| `5` | Government\
-    \ (Governo) |\n| `6` | Hardware (Ferramentas) |\n| `7` | Laundry (Lavandaria) |\n| `8` | Textiles (T\xEAxteis) |\n| `9`\
-    \ | Maintenance (Manuten\xE7\xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xED\
-    lios) |\n| `13` | Utilities (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos)\
-    \ |\n| `16` | Legal (Jur\xEDdico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1\
-    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- `addExpense` and\
-    \ `addInvoice` now require 1 to 20 `lines` in the creation request. Any line failure rolls back the document and all lines.\
-    \ Invoices remain drafts until `closeInvoice`.\n- Removed the separate `addExpenseLine`, `addInvoiceLine` and `addInvoiceLines`\
-    \ endpoints from API v2. Create each document and its lines together; API v1 is unchanged.\n- Added correlated auditing\
-    \ of authorized writes and explicit `commit_uncertain` errors.\n- Strengthened guest validation, SIBA document handling\
-    \ and account-specific SAF-T generation.\n- Serialized receipt, credit-note, guest, expense-line and reservation-extra\
-    \ writes to prevent duplicate or partial changes.\n- Preserve previous expense attachments and SAF-T exports on confirmed\
-    \ failed replacement; uncertain commits require reconciliation instead of automatic restoration or retry.\n- New rental-contract\
-    \ references are unique and opaque, independent of draft deletion.\n\n### 2026-10-07\n\n- Added `uploadExpenseFile` for\
-    \ PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded file. This endpoint alone accepts a raw JSON\
-    \ body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract` and `deleteRentalContract` for draft contracts.\
-    \ Submission activates a contract only after confirmed AT acceptance; uncertain results require reconciliation before\
-    \ retrying.\n- `getCityTaxDeclarations` searches both declaration sources without `source`, `apid` or `id` request parameters.\
-    \ `uniqid` searches both sources; `license_number` also matches complete members of merged declarations.\n- Removed `getExpenseCategories`;\
-    \ category IDs remain documented in Enumerations.\n\n### 2.0.0\n\n- Account-wide API keys with mandatory HMAC-SHA256 authentication\
-    \ and read-only or read/write permissions. Existing account IP whitelist rules also apply to v2.\n- GET query filters\
-    \ for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain write outcomes before retrying; repeated\
-    \ writes are not deduplicated.\n- Consolidated reads: `getReservations` can select one reservation; `getProperties` can\
-    \ select one property. Expenses, invoices, credit notes, receipts and rental contracts support individual selectors.\n\
-    - Invoicing configuration, series, products and Modelo 30 operations; service-user creation and updates.\n- `getCityTaxDeclarations`\
-    \ includes a local PDF as Base64 in `document`, or null when unavailable; there is no separate document endpoint.\n- Mintlify\
-    \ reference, downloadable Postman collection with automatic HMAC signing, cURL examples and Markdown documentation for\
-    \ LLMs.\n\nAPI v1 remains separate and available; v2 does not change the v1 request format.\n"
+    \ | Monthly |\n| `MENORM` | Less than one month |\n\n### Current account transaction types\n\n| Value | Description |\n\
+    | --- | --- |\n| `C` | Credit: increases the balance |\n| `D` | Debit: decreases the balance |\n\n### Modelo 30 transaction\
+    \ types\n\n| Value | Description |\n| --- | --- |\n| `U` | One specific month |\n| `R` | Every generated month, including\
+    \ historical periods |\n\n### City tax sources\n\n| Value | Description |\n| --- | --- |\n| `tmtai` | Hostkit City Tax\
+    \ |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\n| Value |\n| --- |\n| `9flats` |\n| `abreu` |\n\
+    | `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago` |\n| `atraveo` |\n| `belvilla` |\n| `blueground`\
+    \ |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info` |\n| `campspace` |\n| `clickstay` |\n| `corporate`\
+    \ |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n| `edreams` |\n| `email` |\n| `eurofun` |\n| `eurohike`\
+    \ |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com` |\n| `google` |\n| `hometogo` |\n| `hostelworld` |\n\
+    | `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip` |\n| `hrs` |\n| `inntravel` |\n| `jetcamp` |\n\
+    | `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere` |\n| `muchosol` |\n| `mycamper`\
+    \ |\n| `odisseias` |\n| `olimar` |\n| `oliverstravels` |\n| `oyo` |\n| `phone` |\n| `pincamp` |\n| `pitchup` |\n| `plumguide`\
+    \ |\n| `profitroom` |\n| `roomarama` |\n| `scapetravel` |\n| `seabreeze` |\n| `solmar` |\n| `spotahome` |\n| `splvillas`\
+    \ |\n| `stsurleshauteurs` |\n| `traum` |\n| `travelagency` |\n| `travelagent` |\n| `travelstaytion` |\n| `trip.com` |\n\
+    | `tripadvisor` |\n| `uniplaces` |\n| `villacollection` |\n| `villamore` |\n| `villaplus` |\n| `vintage` |\n| `vistaverde`\
+    \ |\n| `voucher` |\n| `vrbo` |\n| `walkin` |\n| `website` |\n| `wolters` |\n| `wix` |\n\n### Invoices sources\n\n| Value\
+    \ | Description |\n| --- | --- |\n| `api` | API invoices (faturas via API) |\n| `automatic` | Automatic invoices (faturas\
+    \ autom\xE1ticas) |\n| `bulk` | Bulk invoices (faturas geradas em massa) |\n| `pmc` | Property management invoices (faturas\
+    \ de comiss\xF5es de gest\xE3o) |\n| `manual` | Manual invoices (faturas manuais) |\n\n### Invoices payment methods\n\n\
+    | Value | Description |\n| --- | --- |\n| `CC` | Credit card (Cart\xE3o cr\xE9dito) |\n| `CD` | Debit card (Cart\xE3o\
+    \ d\xE9bito) |\n| `CH` | Bank check (Cheque banc\xE1rio) |\n| `CI` | International documentary credit (Cr\xE9dito document\xE1\
+    rio internacional) |\n| `CO` | Cheque or gift card (Cheque ou cart\xE3o oferta) |\n| `CS` | Clearing of current account\
+    \ balances (Compensa\xE7\xE3o de saldos em conta corrente) |\n| `DE` | Electronic money (Dinheiro eletr\xF3nico) |\n|\
+    \ `LC` | Commercial bills (Letra comercial) |\n| `MB` | ATM (Multibanco) |\n| `NU` | Cash (Numer\xE1rio) |\n| `PR` | Exchange\
+    \ of goods (Permuta de bens) |\n| `TB` | Bank transfer or authorised direct debit (Transfer\xEAncia banc\xE1ria ou d\xE9\
+    bito direto autorizado) |\n| `OU` | Other means not listed here (Outros meios aqui n\xE3o assinalados) |\n\n### Invoicing\
+    \ product VAT exemption codes\n\n| Value | Description |\n| --- | --- |\n| `M01` | Article 16, nr. 6 of CIVA (Artigo 16.\xBA\
+    \ n.\xBA 6 do CIVA) |\n| `M02` | Article 6 of Decree-Law 198/90 of 19 June (Artigo 6.\xBA do Decreto-Lei n.\xBA 198/90,\
+    \ de 19 de Junho) |\n| `M03` | Cash requirement (Exigibilidade de caixa) |\n| `M04` | Exempt Article 13 of CIVA (Isento\
+    \ Artigo 13.\xBA do CIVA) |\n| `M05` | Exempt Article 14 of CIVA (Isento Artigo 14.\xBA do CIVA) |\n| `M06` | Exempt Article\
+    \ 15 of CIVA (Isento Artigo 15.\xBA do CIVA) |\n| `M07` | Exempt Article 9 of CIVA (Isento Artigo 9.\xBA do CIVA) |\n\
+    | `M09` | VAT no right to deduction (IVA n\xE3o confere direito a dedu\xE7\xE3o) |\n| `M10` | VAT exemption scheme (IVA\
+    \ regime de isen\xE7\xE3o) |\n| `M11` | Special tobacco regime (Regime particular do tabaco) |\n| `M12` | Profit margin\
+    \ scheme, travel agencies (Regime da margem de lucro, ag\xEAncias de viagens) |\n| `M13` | Profit margin scheme, second-hand\
+    \ goods (Regime da margem de lucro, bens em segunda m\xE3o) |\n| `M14` | Profit margin scheme, works of art (Regime da\
+    \ margem de lucro, objectos de arte) |\n| `M15` | Profit margin scheme, collectors' items and antiques (Regime da margem\
+    \ de lucro, objectos de colec\xE7\xE3o e antiguidades) |\n| `M16` | Exempt Article 14 of the RITI (Isento Artigo 14.\xBA\
+    \ do RITI) |\n| `M19` | Other exemptions (Outras isen\xE7\xF5es) |\n| `M20` | VAT flat-rate scheme (IVA regime forfet\xE1\
+    rio) |\n| `M21` | VAT no right to deduction or similar expression (IVA n\xE3o confere direito \xE0 dedu\xE7\xE3o ou express\xE3\
+    o similar) |\n| `M25` | Goods on consignment (Mercadorias \xE0 consigna\xE7\xE3o) |\n| `M26` | VAT exemption with right\
+    \ of deduction on food baskets (Isen\xE7\xE3o de IVA com direito \xE0 dedu\xE7\xE3o no cabaz alimentar) |\n| `M30` | VAT\
+    \ reverse charge, Article 2, nr. 1, line i of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea i do CIVA)\
+    \ |\n| `M31` | VAT reverse charge, Article 2, nr. 1, line j of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1\
+    \ al\xEDnea j do CIVA) |\n| `M32` | VAT reverse charge, Article 2, nr. 1, line l of CIVA (IVA autoliquida\xE7\xE3o, Artigo\
+    \ 2.\xBA n.\xBA 1 al\xEDnea l do CIVA) |\n| `M33` | VAT reverse charge, Article 2, nr. 1, line m of CIVA (IVA autoliquida\xE7\
+    \xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea m do CIVA) |\n| `M34` | VAT reverse charge, Article 2, nr. 1, line n of CIVA (IVA\
+    \ autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea n do CIVA) |\n| `M40` | VAT reverse charge, Article 6, nr. 6,\
+    \ line a of CIVA to the contrary (IVA autoliquida\xE7\xE3o, Artigo 6.\xBA n.\xBA 6 al\xEDnea a do CIVA, a contr\xE1rio)\
+    \ |\n| `M41` | VAT reverse charge, Article 8, nr. 3 of CIVA (IVA autoliquida\xE7\xE3o, Artigo 8.\xBA n.\xBA 3 do CIVA)\
+    \ |\n| `M42` | VAT reverse charge, Decree-Law no. 21/2007, of 29 January (IVA autoliquida\xE7\xE3o, Decreto-Lei n.\xBA\
+    \ 21/2007, de 29 de janeiro) |\n| `M43` | VAT reverse charge, Decree-Law no. 362/99, of 16th September (IVA autoliquida\xE7\
+    \xE3o, Decreto-Lei n.\xBA 362/99, de 16 de setembro) |\n| `M44` | Specific Rules, Article 6 of RITI (Regras espec\xED\
+    ficas, artigo 6.\xBA do CIVA) |\n| `M45` | Cross-border exemption scheme (Regime transfronteiri\xE7o de isen\xE7\xE3o)\
+    \ |\n| `M46` | e-TaxFree |\n| `M99` | Not subject, not taxed (N\xE3o sujeito, n\xE3o tributado) |\n\n### Expenses categories\n\
+    \n| Value | Description |\n| --- | --- |\n| `1` | Consumables (Consum\xEDveis) |\n| `2` | Decoration (Decora\xE7\xE3o)\
+    \ |\n| `3` | Electronics (Eletr\xF3nica) |\n| `4` | Furniture (Mobili\xE1rio) |\n| `5` | Government (Governo) |\n| `6`\
+    \ | Hardware (Ferramentas) |\n| `7` | Laundry (Lavandaria) |\n| `8` | Textiles (T\xEAxteis) |\n| `9` | Maintenance (Manuten\xE7\
+    \xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xEDlios) |\n| `13` | Utilities\
+    \ (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos) |\n| `16` | Legal (Jur\xED\
+    dico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1rio) |\n| `19` | Rents (Rendas)\
+    \ |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- Added `getCustomers`, `addCustomer` and `deleteCustomer`;\
+    \ customers with associated documents cannot be deleted.\n- Added `getCurrentAccount` with complete-period opening/closing\
+    \ balances and paginated transactions. Manual unlinked transactions can be created, updated and deleted through the dedicated\
+    \ endpoints.\n- Added `addModelo30Transaction` for monthly and recurring manual transactions; generation and submission\
+    \ remain separate actions.\n- `addExpense` and `addInvoice` now require 1 to 20 `lines` in the creation request. Any line\
+    \ failure rolls back the document and all lines. Invoices remain drafts until `closeInvoice`.\n- Removed the separate\
+    \ `addExpenseLine`, `addInvoiceLine` and `addInvoiceLines` endpoints from API v2. Create each document and its lines together;\
+    \ API v1 is unchanged.\n- Added correlated auditing of authorized writes and explicit `commit_uncertain` errors.\n- Strengthened\
+    \ guest validation, SIBA document handling and account-specific SAF-T generation.\n- Serialized receipt, credit-note,\
+    \ guest, expense-line and reservation-extra writes to prevent duplicate or partial changes.\n- Preserve previous expense\
+    \ attachments and SAF-T exports on confirmed failed replacement; uncertain commits require reconciliation instead of automatic\
+    \ restoration or retry.\n- New rental-contract references are unique and opaque, independent of draft deletion.\n\n###\
+    \ 2026-10-07\n\n- Added `uploadExpenseFile` for PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded\
+    \ file. This endpoint alone accepts a raw JSON body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract`\
+    \ and `deleteRentalContract` for draft contracts. Submission activates a contract only after confirmed AT acceptance;\
+    \ uncertain results require reconciliation before retrying.\n- `getCityTaxDeclarations` searches both declaration sources\
+    \ without `source`, `apid` or `id` request parameters. `uniqid` searches both sources; `license_number` also matches complete\
+    \ members of merged declarations.\n- Removed `getExpenseCategories`; category IDs remain documented in Enumerations.\n\
+    \n### 2.0.0\n\n- Account-wide API keys with mandatory HMAC-SHA256 authentication and read-only or read/write permissions.\
+    \ Existing account IP whitelist rules also apply to v2.\n- GET query filters for reads; POST, PATCH and DELETE with JSON\
+    \ bodies for writes. Confirm uncertain write outcomes before retrying; repeated writes are not deduplicated.\n- Consolidated\
+    \ reads: `getReservations` can select one reservation; `getProperties` can select one property. Expenses, invoices, credit\
+    \ notes, receipts and rental contracts support individual selectors.\n- Invoicing configuration, series, products and\
+    \ Modelo 30 operations; service-user creation and updates.\n- `getCityTaxDeclarations` includes a local PDF as Base64\
+    \ in `document`, or null when unavailable; there is no separate document endpoint.\n- Mintlify reference, downloadable\
+    \ Postman collection with automatic HMAC signing, cURL examples and Markdown documentation for LLMs.\n\nAPI v1 remains\
+    \ separate and available; v2 does not change the v1 request format.\n"
   schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 auth:
   type: apikey
@@ -868,8 +875,8 @@ item:
       description: 'Atomically move an active or archived reservation to cancellations; this is not deletion.
 
 
-        Requires InnoDB tables properties, reservations, reservations_archived, reservations_cancelled, fac_invoices and fac_config.
-        Lock the property/reservation and require one unambiguous source; failures roll back the move.
+        Cancellation is atomic across the reservation and associated invoicing data. Require one unambiguous reservation;
+        failures roll back the move.
 
 
         If a closed related invoice and credit_note_on_cancel configuration require automatic fiscal cancellation, return
@@ -923,11 +930,11 @@ item:
       description: 'Atomically delete a reservation and related records permanently.
 
 
-        Requires all affected reservation, related-data and channel-manager mapping tables to use InnoDB. Fail closed with
-        HTTP 503 transactions_unavailable when transactional requirements are not met; partial deletion is not permitted.
+        Deletion is atomic across the reservation, related data and channel-manager mappings. Fail closed with HTTP 503 transactions_unavailable
+        when atomic changes are unavailable; partial deletion is not permitted.
 
 
-        Lock the property/reservation and require one unambiguous active or archived source before deleting related records.
+        Require one unambiguous active or archived reservation before deleting related records.
 
 
         Parameters
@@ -3054,6 +3061,553 @@ item:
             value: '2026'
           - key: month
             value: '10'
+      response: []
+    - name: addModelo30Transaction
+      request:
+        method: POST
+        description: 'Add a manual monthly or recurring Modelo 30 transaction.
+
+
+          U requires year and month. R omits both and applies to all generated periods, including historical regeneration;
+          response year/month are null.
+
+
+          Validate beneficiary identifiers, country, income and taxation codes. Amount is a nonnegative decimal string, including
+          zero.
+
+
+          The transaction does not refresh an existing XML or submit a declaration. Use generateModelo30 explicitly after
+          adding transactions.
+
+
+          Creation and generation are serialized per account and invoicing_nif. Repeating a successful creation with a fresh
+          nonce creates another transaction.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `year` | integer | No | Calendar year. minimum: 1000; maximum: 9999 |
+
+          | `month` | integer | No | Calendar month. minimum: 1; maximum: 12 |
+
+          | `beneficiary_nif` | string | Yes | Portuguese beneficiary VAT ID. minLength: 1; maxLength: 50 |
+
+          | `foreign_nif` | string | Yes | Foreign beneficiary VAT ID. minLength: 1; maxLength: 50 |
+
+          | `country` | string | Yes | Official numeric country code used by Modelo 30, not an ISO/ICAO letter code. minLength:
+          1; maxLength: 50 |
+
+          | `income_type` | string | Yes | Existing two-character Modelo 30 income code. minLength: 2; maxLength: 2 |
+
+          | `taxation` | string | Yes | Existing two-character Modelo 30 taxation code. minLength: 2; maxLength: 2 |
+
+          | `amount` | string | Yes | Nonnegative amount with a dot separator and at most two decimal places; maximum 999999999999.99.
+          pattern: "^[0-9]{1,12}(\\.[0-9]{1,2})?$" |
+
+          | `type` | string | Yes | U applies to one month; R applies to every generated month. enum: ["U","R"] |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addModelo30Transaction'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addModelo30Transaction
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"beneficiary_nif\": \"123456789\",\n  \"foreign_nif\": \"EXAMPLE123\"\
+            ,\n  \"country\": \"826\",\n  \"income_type\": \"08\",\n  \"taxation\": \"02\",\n  \"amount\": \"100.00\",\n \
+            \ \"type\": \"U\",\n  \"year\": 2026,\n  \"month\": 10\n}"
+          options:
+            raw:
+              language: json
+      response: []
+  - name: Customers
+    description: Invoicing customers and document-aware deletion.
+    item:
+    - name: getCustomers
+      request:
+        method: GET
+        description: 'List customers or filter by customer_id, nif or search text.
+
+
+          All supplied filters intersect. Results always remain a paginated customers array, including an exact ID lookup.
+          Anonymous final-consumer profiles are excluded.
+
+
+          Customer identity and VAT ID are distinct for historical customers; return both without assuming they are equal.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `customer_id` | string | No | Exact customer identity. minLength: 1; maxLength: 50 |
+
+          | `nif` | string | No | Exact customer VAT ID. minLength: 1; maxLength: 50 |
+
+          | `search` | string | No | Literal text search across customer contact fields. minLength: 1; maxLength: 100 |
+
+          | `limit` | integer | No | Result limit; default 25. minimum: 1; maximum: 100 |
+
+          | `offset` | integer | No | Result offset; default 0. minimum: 0; maximum: 2147483647 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getCustomers?invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getCustomers
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+      response: []
+    - name: addCustomer
+      request:
+        method: POST
+        description: 'Create a customer for an authorized invoicing VAT ID.
+
+
+          Derive customer_id from the normalized customer VAT ID, as in customer creation in the application. An existing
+          customer identity returns 409 customer_exists; this is not an update.
+
+
+          Anonymous final-consumer profiles cannot be created with this endpoint. Validate customer country and contact fields
+          before saving.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `nif` | string | Yes | Customer VAT ID; the customer_id is derived from this value. minLength: 1; maxLength: 50
+          |
+
+          | `name` | string | Yes | Customer name. minLength: 1; maxLength: 255 |
+
+          | `country` | string | Yes | Two-letter ISO country code. pattern: "^[A-Za-z]{2}$" |
+
+          | `address` | string | No | Customer address; default -. maxLength: 2000 |
+
+          | `city` | string | No | Customer city; default -. maxLength: 50 |
+
+          | `cp` | string | No | Postal code; default 0000-000. maxLength: 10 |
+
+          | `email` | string | No | Optional email, or empty. pattern: "^([^\\s@]+@[^\\s@]+\\.[^\\s@]+)?$"; maxLength: 100
+          |
+
+          | `phone` | string | No | Optional phone, or empty. pattern: "^[0-9+() .-]*$"; maxLength: 50 |
+
+          | `favourite` | boolean | No | Favourite customer; default false.  |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addCustomer'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addCustomer
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"nif\": \"123456789\",\n  \"name\": \"Example Person\",\n  \"country\"\
+            : \"PT\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: deleteCustomer
+      request:
+        method: DELETE
+        description: 'Delete a customer only when no invoice, credit note or receipt references it.
+
+
+          Any associated document, including a draft or credited invoice, blocks deletion with 409 customer_in_use. Check
+          historical references by customer identity and VAT ID.
+
+
+          Anonymous final-consumer profiles and ambiguous customer identities cannot be deleted. Serialize customer deletion
+          with API v2 invoice creation.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `customer_id` | string | Yes | Exact customer identity. minLength: 1; maxLength: 50 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/deleteCustomer'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - deleteCustomer
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"customer_id\": \"123456789\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+  - name: Current Account
+    description: Current-account transactions and period balances.
+    item:
+    - name: getCurrentAccount
+      request:
+        method: GET
+        description: 'Read current-account transactions for a period, with opening and closing balances.
+
+
+          Requires the current-account module to be enabled for invoicing_nif. date_start must not exceed date_end.
+
+
+          C adds amount to the balance; D subtracts it. Opening and closing balances cover the full account period, not only
+          the returned page. No property filter changes the balance scope.
+
+
+          Transactions are ordered by date and stable id. Use limit/offset to retrieve all lines. Concurrent changes between
+          requests can alter later pages; each response uses one consistent snapshot.
+
+
+          Amounts and balances are exact decimal strings. Malformed saved amounts or directions return invalid_stored_amount
+          or invalid_stored_type rather than silently changing the balance.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `date_start` | integer | Yes | Inclusive start of the period in Unix seconds. minimum: 0; maximum: 253402300799
+          |
+
+          | `date_end` | integer | Yes | Inclusive end in Unix seconds, including every microsecond of that second. minimum:
+          0; maximum: 253402300799 |
+
+          | `limit` | integer | No | Result limit; default 25. minimum: 1; maximum: 100 |
+
+          | `offset` | integer | No | Result offset; default 0. minimum: 0; maximum: 2147483647 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        url:
+          raw: '{{baseUrl}}/getCurrentAccount?date_end=1793491199&date_start=1790812800&invoicing_nif=123456789'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - getCurrentAccount
+          query:
+          - key: invoicing_nif
+            value: '123456789'
+          - key: date_start
+            value: '1790812800'
+          - key: date_end
+            value: '1793491199'
+      response: []
+    - name: addCurrentAccountTransaction
+      request:
+        method: POST
+        description: 'Add a manual current-account transaction without a document reference.
+
+
+          Requires the current-account module. The server fixes origin to manual; invoice references cannot be supplied.
+
+
+          Any supplied property and reservation must belong to the account. A reservation requires apid.
+
+
+          Amount is nonnegative; type determines credit or debit. Zero is accepted. Returns the stable id.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `type` | string | Yes | C credits the account; D debits it. enum: ["C","D"] |
+
+          | `amount` | string | Yes | Nonnegative amount with a dot separator and at most two decimal places; maximum 999999999999.99.
+          pattern: "^[0-9]{1,12}(\\.[0-9]{1,2})?$" |
+
+          | `date` | integer | Yes | Unix timestamp in seconds; transactions retain microsecond precision internally. minimum:
+          0; maximum: 253402300799 |
+
+          | `description` | string | No | Transaction description; default empty. maxLength: 2000 |
+
+          | `apid` | integer | No | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | No | Owned reservation code; requires apid. Empty clears the reservation link. pattern: "^[A-Za-z0-9._-]{0,60}$"
+          |
+
+          | `category` | integer | No | Transaction category; default 1. minimum: 0; maximum: 9 |
+
+          | `hide_sv` | boolean | No | Hide from service users; default false.  |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/addCurrentAccountTransaction'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - addCurrentAccountTransaction
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"type\": \"C\",\n  \"amount\": \"100.00\",\n  \"date\": 1790812800,\n\
+            \  \"description\": \"Example manual credit\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: updateCurrentAccountTransaction
+      request:
+        method: PATCH
+        description: 'Update supplied fields of an unlinked manual current-account transaction.
+
+
+          Supply at least one editable field. Omitted fields remain unchanged; the stable id never changes when the date is
+          edited. A supplied reservation can reuse the saved property; an empty rcode removes the reservation link.
+
+
+          Only origin=manual with no saved document reference is editable. Automatically generated or linked movements return
+          409 immutable_transaction.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
+
+          | `type` | string | No | C credits the account; D debits it. enum: ["C","D"] |
+
+          | `amount` | string | No | Nonnegative amount with a dot separator and at most two decimal places; maximum 999999999999.99.
+          pattern: "^[0-9]{1,12}(\\.[0-9]{1,2})?$" |
+
+          | `date` | integer | No | Unix timestamp in seconds; transactions retain microsecond precision internally. minimum:
+          0; maximum: 253402300799 |
+
+          | `description` | string | No | Transaction description; default empty. maxLength: 2000 |
+
+          | `apid` | integer | No | Property ID belonging to the authenticated account.  |
+
+          | `rcode` | string | No | Owned reservation code; requires apid. Empty clears the reservation link. pattern: "^[A-Za-z0-9._-]{0,60}$"
+          |
+
+          | `category` | integer | No | Transaction category; default 1. minimum: 0; maximum: 9 |
+
+          | `hide_sv` | boolean | No | Hide from service users; default false.  |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/updateCurrentAccountTransaction'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - updateCurrentAccountTransaction
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"description\": \"Updated manual transaction\"\n}"
+          options:
+            raw:
+              language: json
+      response: []
+    - name: deleteCurrentAccountTransaction
+      request:
+        method: DELETE
+        description: 'Delete an unlinked manual current-account transaction.
+
+
+          Only origin=manual with no saved document reference can be deleted. Automatically generated or linked movements
+          return 409 immutable_transaction.
+
+
+          The stable id is scoped to the authenticated account and invoicing_nif. Deletion is permanent and changes subsequent
+          balances.
+
+
+          Parameters
+
+
+          | Field | Type | Required | Description / constraints |
+
+          | --- | --- | --- | --- |
+
+          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
+          "^[A-Za-z0-9._-]{1,20}$" |
+
+          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |'
+        header:
+        - key: Accept
+          value: application/json
+        - key: X-API-Key
+          value: '{{apiKey}}'
+          description: Set apiKey locally; never share the real value.
+        - key: X-Timestamp
+          value: '{{apiTimestamp}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Nonce
+          value: '{{apiNonce}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: X-Signature
+          value: '{{apiSignature}}'
+          description: Generated locally by the collection HMAC pre-request script for each request.
+        - key: Content-Type
+          value: application/json
+        url:
+          raw: '{{baseUrl}}/deleteCurrentAccountTransaction'
+          host:
+          - '{{baseUrl}}'
+          path:
+          - deleteCurrentAccountTransaction
+        body:
+          mode: raw
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1\n}"
+          options:
+            raw:
+              language: json
       response: []
   - name: Config
     description: Invoicing configuration for an authorized VAT ID.
