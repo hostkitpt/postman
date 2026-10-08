@@ -42,48 +42,51 @@ info:
     :{\"request_id\":\"example-request-id\"}}\n```\n\nThe last access value of each matching entry is updated as a Unix timestamp\
     \ after successful authentication and IP authorization. Rejected addresses do not update last access. IP whitelisting\
     \ supplements API key and HMAC authentication; it does not replace either.\n\n## Rate Limit\n\nThe API rate limit is **100\
-    \ requests per minute**, the same as API v1. If you need a higher limit, contact [Hostkit support](https://hostkit.pt/suporte/).\
-    \ Avoid repeated polling and uncontrolled parallel requests; reuse previously retrieved data where appropriate.\n\nIf\
-    \ you receive HTTP 429 from the gateway, wait for the period indicated by `Retry-After`, when present, before retrying.\
-    \ Otherwise use exponential backoff with jitter. Every retry must have a fresh timestamp, nonce and signature. Confirm\
-    \ the outcome of write requests before retrying; repeated writes can create duplicates.\n\nRequest size, batch size and\
-    \ pagination limits are documented below and are separate from request frequency limits.\n\n## Requests\n\nGET reads data\
-    \ using URL query parameters, without a body. POST creates, PATCH edits and DELETE deletes using a UTF-8 JSON object body,\
-    \ with no business query parameters. The maximum raw body size is **8192 bytes**, except **uploadExpenseFile**: **7 MiB**\
-    \ of JSON for a file of at most **5 MiB** (5242880 bytes). Unknown fields and duplicate query parameters are rejected.\n\
-    \nIDs, years and months are integers. Money is decimal text. Write booleans are JSON `true` or `false`; GET booleans use\
-    \ exactly `true` or `false`. GET integers use plain decimal text without fractions or exponent notation. Omitted update\
-    \ fields are preserved.\n\nAn API key identifies one account. Property operations require `apid` belonging to that account.\
-    \ Fiscal operations require an authorized `invoicing_nif`; reservation references also require `apid`. Available operations\
-    \ depend on your account permissions, license and enabled modules.\n\n`addExpense` and `addInvoice` require a `lines`\
-    \ array containing 1 to 20 lines. The document and all lines are created atomically in one request: any line failure rolls\
-    \ back the complete creation. The entire JSON body must fit 8192 bytes. An invoice remains a draft until explicitly closed\
-    \ with `closeInvoice`.\n\n### Reservation filters\n\nIdentity and list filters cannot be combined: rcode/CM selectors\
-    \ reject from_date, to_date, reservation_date, date_filter, room, provider, language and nif rather than ignoring them.\
-    \ Invalid combinations return HTTP 422. Incomplete or conflicting channel-manager selectors are also rejected.\n\nDate\
-    \ listing intersects supplied filters; it is not an overlap search. Without `date_filter`, `from_date` constrains check-in\
-    \ and `to_date` constrains checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`, both boundaries\
-    \ apply to that date and include the selected end day.\n\n### Retries\n\nThe API does not deduplicate write requests or\
-    \ replay stored responses. After a timeout or uncertain result, check application state before retrying a write. Repeating\
-    \ a creation request can create another resource. Each retry requires a fresh timestamp, nonce and signature.\n\n## Key\
-    \ permissions\n\nAccounts may have up to five API keys, each with read-only or read/write access. Every key can read;\
-    \ write access is optional and new keys default to read-only. There are no write-only keys. Keys exist until deleted;\
-    \ deleting a key frees a slot. GET operations require read, except getKeycode which can create a lock code and requires\
-    \ write. POST/PATCH/DELETE require write. Missing permission returns HTTP 403 permission_denied before dispatch. IP whitelist\
-    \ rules remain account-wide.\n\n## Responses\n\nSuccessful responses contain `status: \"success\"`, `data` and `meta.request_id`.\
-    \ Each documented response data schema describes `data`, not the envelope root. POST `add*` operations return HTTP 201;\
-    \ other successful operations return HTTP 200.\n\nNo cursor pagination is provided. City-tax declarations and service\
-    \ users support their documented `limit` and `offset` parameters.\n\n## Errors\n\nErrors contain `status: \"failure\"\
-    `, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP errors include 400, 401, 403, 404,\
-    \ 405, 409, 413, 415, 422, 500, 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\n| HTTP status\
-    \ | Description |\n| --- | --- |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid, expired or\
-    \ replayed authentication. |\n| 403 | API key read/write permission, account/property/NIF authorization, license, module\
-    \ or IP restriction. |\n| 404 | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies the\
-    \ required method. |\n| 409 | Identity, shared-profile or resource-state conflict. |\n| 413 | Request body, expense file\
-    \ or inline city-tax documents exceed the endpoint limit. |\n| 415 | Unsupported request media type. |\n| 422 | Typed\
-    \ schema or document validation failed. |\n| 500 | Internal error; internal details are not exposed. |\n| 501 | Requested\
-    \ source capability is unsupported, including remote iTaxas PDF delivery. |\n| 503 | Required handler, contract, transactional\
-    \ table or service is unavailable. |\n| 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance.\
+    \ requests per minute**, the same as API v1. The limit is shared by all API keys belonging to one account and uses fixed\
+    \ one-minute windows. Requests with valid authentication, accepted parameters, sufficient permissions and an allowed source\
+    \ IP count towards the limit, including subsequent business errors. If you need a higher limit, contact [Hostkit support](https://hostkit.pt/suporte/).\
+    \ Avoid repeated polling and uncontrolled parallel requests; reuse previously retrieved data where appropriate.\n\nAPI\
+    \ rate-limit rejections return HTTP 429 with `error.code: \"rate_limit_exceeded\"` and `Retry-After` in seconds until\
+    \ the next window, before executing the endpoint. Wait for that period before retrying. An upstream gateway may enforce\
+    \ additional limits; if its response has no `Retry-After`, use exponential backoff with jitter. Every retry must have\
+    \ a fresh timestamp, nonce and signature. Confirm the outcome of write requests before retrying; repeated writes can create\
+    \ duplicates.\n\nRequest size, batch size and pagination limits are documented below and are separate from request frequency\
+    \ limits.\n\n## Requests\n\nGET reads data using URL query parameters, without a body. POST creates, PATCH edits and DELETE\
+    \ deletes using a UTF-8 JSON object body, with no business query parameters. The maximum raw body size is **8192 bytes**,\
+    \ except **uploadExpenseFile**: **7 MiB** of JSON for a file of at most **5 MiB** (5242880 bytes). Unknown fields and\
+    \ duplicate query parameters are rejected.\n\nIDs, years and months are integers. Money is decimal text. Write booleans\
+    \ are JSON `true` or `false`; GET booleans use exactly `true` or `false`. GET integers use plain decimal text without\
+    \ fractions or exponent notation. Omitted update fields are preserved.\n\nAn API key identifies one account. Property\
+    \ operations require `apid` belonging to that account. Fiscal operations require an authorized `invoicing_nif`; reservation\
+    \ references also require `apid`. Available operations depend on your account permissions, license and enabled modules.\n\
+    \n`addExpense` and `addInvoice` require a `lines` array containing 1 to 20 lines. The document and all lines are created\
+    \ atomically in one request: any line failure rolls back the complete creation. The entire JSON body must fit 8192 bytes.\
+    \ An invoice remains a draft until explicitly closed with `closeInvoice`.\n\n### Reservation filters\n\nIdentity and list\
+    \ filters cannot be combined: rcode/CM selectors reject from_date, to_date, reservation_date, date_filter, room, provider,\
+    \ language and nif rather than ignoring them. Invalid combinations return HTTP 422. Incomplete or conflicting channel-manager\
+    \ selectors are also rejected.\n\nDate listing intersects supplied filters; it is not an overlap search. Without `date_filter`,\
+    \ `from_date` constrains check-in and `to_date` constrains checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`,\
+    \ both boundaries apply to that date and include the selected end day.\n\n### Retries\n\nThe API does not deduplicate\
+    \ write requests or replay stored responses. After a timeout or uncertain result, check application state before retrying\
+    \ a write. Repeating a creation request can create another resource. Each retry requires a fresh timestamp, nonce and\
+    \ signature.\n\n## Key permissions\n\nAccounts may have up to five API keys, each with read-only or read/write access.\
+    \ Every key can read; write access is optional and new keys default to read-only. There are no write-only keys. Keys exist\
+    \ until deleted; deleting a key frees a slot. GET operations require read, except getKeycode which can create a lock code\
+    \ and requires write. POST/PATCH/DELETE require write. Missing permission returns HTTP 403 permission_denied before dispatch.\
+    \ IP whitelist rules remain account-wide.\n\n## Responses\n\nSuccessful responses contain `status: \"success\"`, `data`\
+    \ and `meta.request_id`. Each documented response data schema describes `data`, not the envelope root. POST `add*` operations\
+    \ return HTTP 201; other successful operations return HTTP 200.\n\nNo cursor pagination is provided. City-tax declarations\
+    \ and service users support their documented `limit` and `offset` parameters.\n\n## Errors\n\nErrors contain `status:\
+    \ \"failure\"`, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP errors include 400,\
+    \ 401, 403, 404, 405, 409, 413, 415, 422, 429, 500, 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\
+    \n| HTTP status | Description |\n| --- | --- |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid,\
+    \ expired or replayed authentication. |\n| 403 | API key read/write permission, account/property/NIF authorization, license,\
+    \ module or IP restriction. |\n| 404 | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies\
+    \ the required method. |\n| 409 | Identity, shared-profile or resource-state conflict. |\n| 413 | Request body, expense\
+    \ file or inline city-tax documents exceed the endpoint limit. |\n| 415 | Unsupported request media type. |\n| 422 | Typed\
+    \ schema or document validation failed. |\n| 429 | Account rate limit exceeded; wait for Retry-After before retrying.\
+    \ |\n| 500 | Internal error; internal details are not exposed. |\n| 501 | Requested source capability is unsupported,\
+    \ including remote iTaxas PDF delivery. |\n| 503 | Required handler, contract, transactional table or service is unavailable.\
     \ |\n\n```json\n{\"status\":\"failure\",\"error\":{\"code\":\"permission_denied\",\"message\":\"API key does not have\
     \ the required permission\"},\"meta\":{\"request_id\":\"example-request-id\"}}\n```\n\n### Write Outcomes\n\nUse `meta.request_id`\
     \ or `X-Request-ID` when contacting support. Authorized writes are audited by request, API key, endpoint, affected resources\
@@ -96,115 +99,120 @@ info:
     \ the submission but local completion failed. Reconcile it before retrying. |\n| `reservation_payment_reconciliation_required`,\
     \ `stripe_unavailable` | If the error identifies an already-created reservation, reconcile that reservation and its payment.\
     \ Do not repeat `addReservation`. |\n| `document_publication_pending` | Reconcile document publication before retrying.\
-    \ |\n\nAn error after an external action or a lost acknowledgement does not prove that nothing changed. Never retry these\
-    \ outcomes automatically.\n\n## Enumerations\n\nSend these request values exactly as listed. Defaults and required fields\
-    \ remain defined by each endpoint.\n\n### Properties license types\n\n| Value | Description |\n| --- | --- |\n| `RNAL`\
-    \ | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL` | Regional short-term rental |\n\n### Properties\
-    \ typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio |\n| `T1` | 1 bedroom |\n| `T2` | 2 bedrooms |\n\
-    | `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n| `T6` | 6 bedrooms |\n| `NA` | Other |\n\n### Reservation\
-    \ date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin` | Check-in date |\n| `checkout` | Checkout date\
-    \ |\n\n### Guest document types\n\n| Value | Description |\n| --- | --- |\n| `P` | Passport |\n| `B` | Identity card |\n\
-    | `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n| `Passaporte` | Passport |\n| `Passport` | Passport\
-    \ |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation extra types\n\n| Value | Description |\n\
-    | --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock providers\n\n| Value | Description\
-    \ |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n| `salto` | Salto |\n| `omnitec`\
-    \ | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY |\n\n### Expense documents\n\n\
-    | Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note |\n\n### Expense types\n\n| Value\
-    \ | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable expense |\n\n### Invoice types\n\
-    \n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n\n### Series document types\n\
-    \n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n| `RG` | Receipt |\n\n### Fiscal\
-    \ regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n| `PT-MA` | Madeira |\n| `PT-AC` |\
-    \ Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n| `ARREND` | Lease |\n| `SUBARR` |\
-    \ Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE` | Machinery rental |\n\n###\
-    \ Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent housing |\n| `H_NPER` | Non-permanent\
-    \ housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description |\n| --- | --- |\n| `MENSAL`\
-    \ | Monthly |\n| `MENORM` | Less than one month |\n\n### Current account transaction types\n\n| Value | Description |\n\
-    | --- | --- |\n| `C` | Credit: increases the balance |\n| `D` | Debit: decreases the balance |\n\n### Modelo 30 transaction\
-    \ types\n\n| Value | Description |\n| --- | --- |\n| `U` | One specific month |\n| `R` | Every generated month, including\
-    \ historical periods |\n\n### City tax sources\n\n| Value | Description |\n| --- | --- |\n| `tmtai` | Hostkit City Tax\
-    \ |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\n| Value |\n| --- |\n| `9flats` |\n| `abreu` |\n\
-    | `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago` |\n| `atraveo` |\n| `belvilla` |\n| `blueground`\
-    \ |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info` |\n| `campspace` |\n| `clickstay` |\n| `corporate`\
-    \ |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n| `edreams` |\n| `email` |\n| `eurofun` |\n| `eurohike`\
-    \ |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com` |\n| `google` |\n| `hometogo` |\n| `hostelworld` |\n\
-    | `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip` |\n| `hrs` |\n| `inntravel` |\n| `jetcamp` |\n\
-    | `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere` |\n| `muchosol` |\n| `mycamper`\
-    \ |\n| `odisseias` |\n| `olimar` |\n| `oliverstravels` |\n| `oyo` |\n| `phone` |\n| `pincamp` |\n| `pitchup` |\n| `plumguide`\
-    \ |\n| `profitroom` |\n| `roomarama` |\n| `scapetravel` |\n| `seabreeze` |\n| `solmar` |\n| `spotahome` |\n| `splvillas`\
-    \ |\n| `stsurleshauteurs` |\n| `traum` |\n| `travelagency` |\n| `travelagent` |\n| `travelstaytion` |\n| `trip.com` |\n\
-    | `tripadvisor` |\n| `uniplaces` |\n| `villacollection` |\n| `villamore` |\n| `villaplus` |\n| `vintage` |\n| `vistaverde`\
-    \ |\n| `voucher` |\n| `vrbo` |\n| `walkin` |\n| `website` |\n| `wolters` |\n| `wix` |\n\n### Invoices sources\n\n| Value\
-    \ | Description |\n| --- | --- |\n| `api` | API invoices (faturas via API) |\n| `automatic` | Automatic invoices (faturas\
-    \ autom\xE1ticas) |\n| `bulk` | Bulk invoices (faturas geradas em massa) |\n| `pmc` | Property management invoices (faturas\
-    \ de comiss\xF5es de gest\xE3o) |\n| `manual` | Manual invoices (faturas manuais) |\n\n### Invoices payment methods\n\n\
-    | Value | Description |\n| --- | --- |\n| `CC` | Credit card (Cart\xE3o cr\xE9dito) |\n| `CD` | Debit card (Cart\xE3o\
-    \ d\xE9bito) |\n| `CH` | Bank check (Cheque banc\xE1rio) |\n| `CI` | International documentary credit (Cr\xE9dito document\xE1\
-    rio internacional) |\n| `CO` | Cheque or gift card (Cheque ou cart\xE3o oferta) |\n| `CS` | Clearing of current account\
-    \ balances (Compensa\xE7\xE3o de saldos em conta corrente) |\n| `DE` | Electronic money (Dinheiro eletr\xF3nico) |\n|\
-    \ `LC` | Commercial bills (Letra comercial) |\n| `MB` | ATM (Multibanco) |\n| `NU` | Cash (Numer\xE1rio) |\n| `PR` | Exchange\
-    \ of goods (Permuta de bens) |\n| `TB` | Bank transfer or authorised direct debit (Transfer\xEAncia banc\xE1ria ou d\xE9\
-    bito direto autorizado) |\n| `OU` | Other means not listed here (Outros meios aqui n\xE3o assinalados) |\n\n### Invoicing\
-    \ product VAT exemption codes\n\n| Value | Description |\n| --- | --- |\n| `M01` | Article 16, nr. 6 of CIVA (Artigo 16.\xBA\
-    \ n.\xBA 6 do CIVA) |\n| `M02` | Article 6 of Decree-Law 198/90 of 19 June (Artigo 6.\xBA do Decreto-Lei n.\xBA 198/90,\
-    \ de 19 de Junho) |\n| `M03` | Cash requirement (Exigibilidade de caixa) |\n| `M04` | Exempt Article 13 of CIVA (Isento\
-    \ Artigo 13.\xBA do CIVA) |\n| `M05` | Exempt Article 14 of CIVA (Isento Artigo 14.\xBA do CIVA) |\n| `M06` | Exempt Article\
-    \ 15 of CIVA (Isento Artigo 15.\xBA do CIVA) |\n| `M07` | Exempt Article 9 of CIVA (Isento Artigo 9.\xBA do CIVA) |\n\
-    | `M09` | VAT no right to deduction (IVA n\xE3o confere direito a dedu\xE7\xE3o) |\n| `M10` | VAT exemption scheme (IVA\
-    \ regime de isen\xE7\xE3o) |\n| `M11` | Special tobacco regime (Regime particular do tabaco) |\n| `M12` | Profit margin\
-    \ scheme, travel agencies (Regime da margem de lucro, ag\xEAncias de viagens) |\n| `M13` | Profit margin scheme, second-hand\
-    \ goods (Regime da margem de lucro, bens em segunda m\xE3o) |\n| `M14` | Profit margin scheme, works of art (Regime da\
-    \ margem de lucro, objectos de arte) |\n| `M15` | Profit margin scheme, collectors' items and antiques (Regime da margem\
-    \ de lucro, objectos de colec\xE7\xE3o e antiguidades) |\n| `M16` | Exempt Article 14 of the RITI (Isento Artigo 14.\xBA\
-    \ do RITI) |\n| `M19` | Other exemptions (Outras isen\xE7\xF5es) |\n| `M20` | VAT flat-rate scheme (IVA regime forfet\xE1\
-    rio) |\n| `M21` | VAT no right to deduction or similar expression (IVA n\xE3o confere direito \xE0 dedu\xE7\xE3o ou express\xE3\
-    o similar) |\n| `M25` | Goods on consignment (Mercadorias \xE0 consigna\xE7\xE3o) |\n| `M26` | VAT exemption with right\
-    \ of deduction on food baskets (Isen\xE7\xE3o de IVA com direito \xE0 dedu\xE7\xE3o no cabaz alimentar) |\n| `M30` | VAT\
-    \ reverse charge, Article 2, nr. 1, line i of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea i do CIVA)\
-    \ |\n| `M31` | VAT reverse charge, Article 2, nr. 1, line j of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1\
-    \ al\xEDnea j do CIVA) |\n| `M32` | VAT reverse charge, Article 2, nr. 1, line l of CIVA (IVA autoliquida\xE7\xE3o, Artigo\
-    \ 2.\xBA n.\xBA 1 al\xEDnea l do CIVA) |\n| `M33` | VAT reverse charge, Article 2, nr. 1, line m of CIVA (IVA autoliquida\xE7\
-    \xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea m do CIVA) |\n| `M34` | VAT reverse charge, Article 2, nr. 1, line n of CIVA (IVA\
-    \ autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea n do CIVA) |\n| `M40` | VAT reverse charge, Article 6, nr. 6,\
-    \ line a of CIVA to the contrary (IVA autoliquida\xE7\xE3o, Artigo 6.\xBA n.\xBA 6 al\xEDnea a do CIVA, a contr\xE1rio)\
-    \ |\n| `M41` | VAT reverse charge, Article 8, nr. 3 of CIVA (IVA autoliquida\xE7\xE3o, Artigo 8.\xBA n.\xBA 3 do CIVA)\
-    \ |\n| `M42` | VAT reverse charge, Decree-Law no. 21/2007, of 29 January (IVA autoliquida\xE7\xE3o, Decreto-Lei n.\xBA\
-    \ 21/2007, de 29 de janeiro) |\n| `M43` | VAT reverse charge, Decree-Law no. 362/99, of 16th September (IVA autoliquida\xE7\
-    \xE3o, Decreto-Lei n.\xBA 362/99, de 16 de setembro) |\n| `M44` | Specific Rules, Article 6 of RITI (Regras espec\xED\
-    ficas, artigo 6.\xBA do CIVA) |\n| `M45` | Cross-border exemption scheme (Regime transfronteiri\xE7o de isen\xE7\xE3o)\
-    \ |\n| `M46` | e-TaxFree |\n| `M99` | Not subject, not taxed (N\xE3o sujeito, n\xE3o tributado) |\n\n### Expenses categories\n\
-    \n| Value | Description |\n| --- | --- |\n| `1` | Consumables (Consum\xEDveis) |\n| `2` | Decoration (Decora\xE7\xE3o)\
-    \ |\n| `3` | Electronics (Eletr\xF3nica) |\n| `4` | Furniture (Mobili\xE1rio) |\n| `5` | Government (Governo) |\n| `6`\
-    \ | Hardware (Ferramentas) |\n| `7` | Laundry (Lavandaria) |\n| `8` | Textiles (T\xEAxteis) |\n| `9` | Maintenance (Manuten\xE7\
-    \xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xEDlios) |\n| `13` | Utilities\
-    \ (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos) |\n| `16` | Legal (Jur\xED\
-    dico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1rio) |\n| `19` | Rents (Rendas)\
-    \ |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- Added `getCustomers`, `addCustomer` and `deleteCustomer`;\
-    \ customers with associated documents cannot be deleted.\n- Added `getCurrentAccount` with complete-period opening/closing\
-    \ balances and paginated transactions. Manual unlinked transactions can be created, updated and deleted through the dedicated\
-    \ endpoints.\n- Added `addModelo30Transaction` for monthly and recurring manual transactions; generation and submission\
-    \ remain separate actions.\n- `addExpense` and `addInvoice` now require 1 to 20 `lines` in the creation request. Any line\
-    \ failure rolls back the document and all lines. Invoices remain drafts until `closeInvoice`.\n- Removed the separate\
-    \ `addExpenseLine`, `addInvoiceLine` and `addInvoiceLines` endpoints from API v2. Create each document and its lines together;\
-    \ API v1 is unchanged.\n- Added correlated auditing of authorized writes and explicit `commit_uncertain` errors.\n- Strengthened\
-    \ guest validation, SIBA document handling and account-specific SAF-T generation.\n- Serialized receipt, credit-note,\
-    \ guest, expense-line and reservation-extra writes to prevent duplicate or partial changes.\n- Preserve previous expense\
-    \ attachments and SAF-T exports on confirmed failed replacement; uncertain commits require reconciliation instead of automatic\
-    \ restoration or retry.\n- New rental-contract references are unique and opaque, independent of draft deletion.\n\n###\
-    \ 2026-10-07\n\n- Added `uploadExpenseFile` for PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded\
-    \ file. This endpoint alone accepts a raw JSON body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract`\
-    \ and `deleteRentalContract` for draft contracts. Submission activates a contract only after confirmed AT acceptance;\
-    \ uncertain results require reconciliation before retrying.\n- `getCityTaxDeclarations` searches both declaration sources\
-    \ without `source`, `apid` or `id` request parameters. `uniqid` searches both sources; `license_number` also matches complete\
-    \ members of merged declarations.\n- Removed `getExpenseCategories`; category IDs remain documented in Enumerations.\n\
-    \n### 2.0.0\n\n- Account-wide API keys with mandatory HMAC-SHA256 authentication and read-only or read/write permissions.\
-    \ Existing account IP whitelist rules also apply to v2.\n- GET query filters for reads; POST, PATCH and DELETE with JSON\
-    \ bodies for writes. Confirm uncertain write outcomes before retrying; repeated writes are not deduplicated.\n- Consolidated\
-    \ reads: `getReservations` can select one reservation; `getProperties` can select one property. Expenses, invoices, credit\
-    \ notes, receipts and rental contracts support individual selectors.\n- Invoicing configuration, series, products and\
-    \ Modelo 30 operations; service-user creation and updates.\n- `getCityTaxDeclarations` includes a local PDF as Base64\
-    \ in `document`, or null when unavailable; there is no separate document endpoint.\n- Mintlify reference, downloadable\
-    \ Postman collection with automatic HMAC signing, cURL examples and Markdown documentation for LLMs.\n\nAPI v1 remains\
-    \ separate and available; v2 does not change the v1 request format.\n"
+    \ |\n| `document_deletion_pending` | The expense may already be deleted, or its attachment may be staged for recovery.\
+    \ Contact support before retrying or uploading another document. |\n\nAn error after an external action or a lost acknowledgement\
+    \ does not prove that nothing changed. Never retry these outcomes automatically.\n\n## Enumerations\n\nSend these request\
+    \ values exactly as listed. Defaults and required fields remain defined by each endpoint.\n\n### Properties license types\n\
+    \n| Value | Description |\n| --- | --- |\n| `RNAL` | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL`\
+    \ | Regional short-term rental |\n\n### Properties typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio\
+    \ |\n| `T1` | 1 bedroom |\n| `T2` | 2 bedrooms |\n| `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n\
+    | `T6` | 6 bedrooms |\n| `NA` | Other |\n\n### Reservation date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin`\
+    \ | Check-in date |\n| `checkout` | Checkout date |\n\n### Guest document types\n\n| Value | Description |\n| --- | ---\
+    \ |\n| `P` | Passport |\n| `B` | Identity card |\n| `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n\
+    | `Passaporte` | Passport |\n| `Passport` | Passport |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation\
+    \ extra types\n\n| Value | Description |\n| --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock\
+    \ providers\n\n| Value | Description |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n\
+    | `salto` | Salto |\n| `omnitec` | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY\
+    \ |\n\n### Expense documents\n\n| Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note\
+    \ |\n\n### Expense types\n\n| Value | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable\
+    \ expense |\n\n### Invoice types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice\
+    \ |\n\n### Series document types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice\
+    \ |\n| `RG` | Receipt |\n\n### Fiscal regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n\
+    | `PT-MA` | Madeira |\n| `PT-AC` | Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n|\
+    \ `ARREND` | Lease |\n| `SUBARR` | Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE`\
+    \ | Machinery rental |\n\n### Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent\
+    \ housing |\n| `H_NPER` | Non-permanent housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description\
+    \ |\n| --- | --- |\n| `MENSAL` | Monthly |\n| `MENORM` | Less than one month |\n\n### Current account transaction types\n\
+    \n| Value | Description |\n| --- | --- |\n| `C` | Credit: increases the balance |\n| `D` | Debit: decreases the balance\
+    \ |\n\n### Modelo 30 transaction types\n\n| Value | Description |\n| --- | --- |\n| `U` | One specific month |\n| `R`\
+    \ | Every generated month, including historical periods |\n\n### City tax sources\n\n| Value | Description |\n| --- |\
+    \ --- |\n| `tmtai` | Hostkit City Tax |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\n| Value |\n\
+    | --- |\n| `9flats` |\n| `abreu` |\n| `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago` |\n| `atraveo`\
+    \ |\n| `belvilla` |\n| `blueground` |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info` |\n| `campspace`\
+    \ |\n| `clickstay` |\n| `corporate` |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n| `edreams` |\n|\
+    \ `email` |\n| `eurofun` |\n| `eurohike` |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com` |\n| `google`\
+    \ |\n| `hometogo` |\n| `hostelworld` |\n| `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip` |\n\
+    | `hrs` |\n| `inntravel` |\n| `jetcamp` |\n| `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere`\
+    \ |\n| `muchosol` |\n| `mycamper` |\n| `odisseias` |\n| `olimar` |\n| `oliverstravels` |\n| `oyo` |\n| `phone` |\n| `pincamp`\
+    \ |\n| `pitchup` |\n| `plumguide` |\n| `profitroom` |\n| `roomarama` |\n| `scapetravel` |\n| `seabreeze` |\n| `solmar`\
+    \ |\n| `spotahome` |\n| `splvillas` |\n| `stsurleshauteurs` |\n| `traum` |\n| `travelagency` |\n| `travelagent` |\n| `travelstaytion`\
+    \ |\n| `trip.com` |\n| `tripadvisor` |\n| `uniplaces` |\n| `villacollection` |\n| `villamore` |\n| `villaplus` |\n| `vintage`\
+    \ |\n| `vistaverde` |\n| `voucher` |\n| `vrbo` |\n| `walkin` |\n| `website` |\n| `wolters` |\n| `wix` |\n\n### Invoices\
+    \ sources\n\n| Value | Description |\n| --- | --- |\n| `api` | API invoices (faturas via API) |\n| `automatic` | Automatic\
+    \ invoices (faturas autom\xE1ticas) |\n| `bulk` | Bulk invoices (faturas geradas em massa) |\n| `pmc` | Property management\
+    \ invoices (faturas de comiss\xF5es de gest\xE3o) |\n| `manual` | Manual invoices (faturas manuais) |\n\n### Invoices\
+    \ payment methods\n\n| Value | Description |\n| --- | --- |\n| `CC` | Credit card (Cart\xE3o cr\xE9dito) |\n| `CD` | Debit\
+    \ card (Cart\xE3o d\xE9bito) |\n| `CH` | Bank check (Cheque banc\xE1rio) |\n| `CI` | International documentary credit\
+    \ (Cr\xE9dito document\xE1rio internacional) |\n| `CO` | Cheque or gift card (Cheque ou cart\xE3o oferta) |\n| `CS` |\
+    \ Clearing of current account balances (Compensa\xE7\xE3o de saldos em conta corrente) |\n| `DE` | Electronic money (Dinheiro\
+    \ eletr\xF3nico) |\n| `LC` | Commercial bills (Letra comercial) |\n| `MB` | ATM (Multibanco) |\n| `NU` | Cash (Numer\xE1\
+    rio) |\n| `PR` | Exchange of goods (Permuta de bens) |\n| `TB` | Bank transfer or authorised direct debit (Transfer\xEA\
+    ncia banc\xE1ria ou d\xE9bito direto autorizado) |\n| `OU` | Other means not listed here (Outros meios aqui n\xE3o assinalados)\
+    \ |\n\n### Invoicing product VAT exemption codes\n\n| Value | Description |\n| --- | --- |\n| `M01` | Article 16, nr.\
+    \ 6 of CIVA (Artigo 16.\xBA n.\xBA 6 do CIVA) |\n| `M02` | Article 6 of Decree-Law 198/90 of 19 June (Artigo 6.\xBA do\
+    \ Decreto-Lei n.\xBA 198/90, de 19 de Junho) |\n| `M03` | Cash requirement (Exigibilidade de caixa) |\n| `M04` | Exempt\
+    \ Article 13 of CIVA (Isento Artigo 13.\xBA do CIVA) |\n| `M05` | Exempt Article 14 of CIVA (Isento Artigo 14.\xBA do\
+    \ CIVA) |\n| `M06` | Exempt Article 15 of CIVA (Isento Artigo 15.\xBA do CIVA) |\n| `M07` | Exempt Article 9 of CIVA (Isento\
+    \ Artigo 9.\xBA do CIVA) |\n| `M09` | VAT no right to deduction (IVA n\xE3o confere direito a dedu\xE7\xE3o) |\n| `M10`\
+    \ | VAT exemption scheme (IVA regime de isen\xE7\xE3o) |\n| `M11` | Special tobacco regime (Regime particular do tabaco)\
+    \ |\n| `M12` | Profit margin scheme, travel agencies (Regime da margem de lucro, ag\xEAncias de viagens) |\n| `M13` |\
+    \ Profit margin scheme, second-hand goods (Regime da margem de lucro, bens em segunda m\xE3o) |\n| `M14` | Profit margin\
+    \ scheme, works of art (Regime da margem de lucro, objectos de arte) |\n| `M15` | Profit margin scheme, collectors' items\
+    \ and antiques (Regime da margem de lucro, objectos de colec\xE7\xE3o e antiguidades) |\n| `M16` | Exempt Article 14 of\
+    \ the RITI (Isento Artigo 14.\xBA do RITI) |\n| `M19` | Other exemptions (Outras isen\xE7\xF5es) |\n| `M20` | VAT flat-rate\
+    \ scheme (IVA regime forfet\xE1rio) |\n| `M21` | VAT no right to deduction or similar expression (IVA n\xE3o confere direito\
+    \ \xE0 dedu\xE7\xE3o ou express\xE3o similar) |\n| `M25` | Goods on consignment (Mercadorias \xE0 consigna\xE7\xE3o) |\n\
+    | `M26` | VAT exemption with right of deduction on food baskets (Isen\xE7\xE3o de IVA com direito \xE0 dedu\xE7\xE3o no\
+    \ cabaz alimentar) |\n| `M30` | VAT reverse charge, Article 2, nr. 1, line i of CIVA (IVA autoliquida\xE7\xE3o, Artigo\
+    \ 2.\xBA n.\xBA 1 al\xEDnea i do CIVA) |\n| `M31` | VAT reverse charge, Article 2, nr. 1, line j of CIVA (IVA autoliquida\xE7\
+    \xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea j do CIVA) |\n| `M32` | VAT reverse charge, Article 2, nr. 1, line l of CIVA (IVA\
+    \ autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea l do CIVA) |\n| `M33` | VAT reverse charge, Article 2, nr. 1,\
+    \ line m of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea m do CIVA) |\n| `M34` | VAT reverse charge,\
+    \ Article 2, nr. 1, line n of CIVA (IVA autoliquida\xE7\xE3o, Artigo 2.\xBA n.\xBA 1 al\xEDnea n do CIVA) |\n| `M40` |\
+    \ VAT reverse charge, Article 6, nr. 6, line a of CIVA to the contrary (IVA autoliquida\xE7\xE3o, Artigo 6.\xBA n.\xBA\
+    \ 6 al\xEDnea a do CIVA, a contr\xE1rio) |\n| `M41` | VAT reverse charge, Article 8, nr. 3 of CIVA (IVA autoliquida\xE7\
+    \xE3o, Artigo 8.\xBA n.\xBA 3 do CIVA) |\n| `M42` | VAT reverse charge, Decree-Law no. 21/2007, of 29 January (IVA autoliquida\xE7\
+    \xE3o, Decreto-Lei n.\xBA 21/2007, de 29 de janeiro) |\n| `M43` | VAT reverse charge, Decree-Law no. 362/99, of 16th September\
+    \ (IVA autoliquida\xE7\xE3o, Decreto-Lei n.\xBA 362/99, de 16 de setembro) |\n| `M44` | Specific Rules, Article 6 of RITI\
+    \ (Regras espec\xEDficas, artigo 6.\xBA do CIVA) |\n| `M45` | Cross-border exemption scheme (Regime transfronteiri\xE7\
+    o de isen\xE7\xE3o) |\n| `M46` | e-TaxFree |\n| `M99` | Not subject, not taxed (N\xE3o sujeito, n\xE3o tributado) |\n\n\
+    ### Expenses categories\n\n| Value | Description |\n| --- | --- |\n| `1` | Consumables (Consum\xEDveis) |\n| `2` | Decoration\
+    \ (Decora\xE7\xE3o) |\n| `3` | Electronics (Eletr\xF3nica) |\n| `4` | Furniture (Mobili\xE1rio) |\n| `5` | Government\
+    \ (Governo) |\n| `6` | Hardware (Ferramentas) |\n| `7` | Laundry (Lavandaria) |\n| `8` | Textiles (T\xEAxteis) |\n| `9`\
+    \ | Maintenance (Manuten\xE7\xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xED\
+    lios) |\n| `13` | Utilities (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos)\
+    \ |\n| `16` | Legal (Jur\xEDdico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1\
+    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- Enforce the 100\
+    \ requests/minute account limit across all keys, with HTTP 429 and `Retry-After`.\n- `deleteExpense` also removes its\
+    \ locally stored attachment; confirmed failures restore it and uncertain outcomes require reconciliation. New expenses\
+    \ cannot inherit retained attachments.\n- Expense vendor names, document numbers and descriptions accept legitimate punctuation,\
+    \ including apostrophes.\n- Improve JSON HTTP 413 responses for rejected request bodies without increasing endpoint size\
+    \ limits.\n- Added `getCustomers`, `addCustomer` and `deleteCustomer`; customers with associated documents cannot be deleted.\n\
+    - Added `getCurrentAccount` with complete-period opening/closing balances and paginated transactions. Manual unlinked\
+    \ transactions can be created, updated and deleted through the dedicated endpoints.\n- Added `addModelo30Transaction`\
+    \ for monthly and recurring manual transactions; generation and submission remain separate actions.\n- `addExpense` and\
+    \ `addInvoice` now require 1 to 20 `lines` in the creation request. Any line failure rolls back the document and all lines.\
+    \ Invoices remain drafts until `closeInvoice`.\n- Removed the separate `addExpenseLine`, `addInvoiceLine` and `addInvoiceLines`\
+    \ endpoints from API v2. Create each document and its lines together; API v1 is unchanged.\n- Added correlated auditing\
+    \ of authorized writes and explicit `commit_uncertain` errors.\n- Strengthened guest validation, SIBA document handling\
+    \ and account-specific SAF-T generation.\n- Serialized receipt, credit-note, guest, expense-line and reservation-extra\
+    \ writes to prevent duplicate or partial changes.\n- Preserve previous expense attachments and SAF-T exports on confirmed\
+    \ failed replacement; uncertain commits require reconciliation instead of automatic restoration or retry.\n- New rental-contract\
+    \ references are unique and opaque, independent of draft deletion.\n\n### 2026-10-07\n\n- Added `uploadExpenseFile` for\
+    \ PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded file. This endpoint alone accepts a raw JSON\
+    \ body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract` and `deleteRentalContract` for draft contracts.\
+    \ Submission activates a contract only after confirmed AT acceptance; uncertain results require reconciliation before\
+    \ retrying.\n- `getCityTaxDeclarations` searches both declaration sources without `source`, `apid` or `id` request parameters.\
+    \ `uniqid` searches both sources; `license_number` also matches complete members of merged declarations.\n- Removed `getExpenseCategories`;\
+    \ category IDs remain documented in Enumerations.\n\n### 2.0.0\n\n- Account-wide API keys with mandatory HMAC-SHA256 authentication\
+    \ and read-only or read/write permissions. Existing account IP whitelist rules also apply to v2.\n- GET query filters\
+    \ for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain write outcomes before retrying; repeated\
+    \ writes are not deduplicated.\n- Consolidated reads: `getReservations` can select one reservation; `getProperties` can\
+    \ select one property. Expenses, invoices, credit notes, receipts and rental contracts support individual selectors.\n\
+    - Invoicing configuration, series, products and Modelo 30 operations; service-user creation and updates.\n- `getCityTaxDeclarations`\
+    \ includes a local PDF as Base64 in `document`, or null when unavailable; there is no separate document endpoint.\n- Mintlify\
+    \ reference, downloadable Postman collection with automatic HMAC signing, cURL examples and Markdown documentation for\
+    \ LLMs.\n\nAPI v1 remains separate and available; v2 does not change the v1 request format.\n"
   schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 auth:
   type: apikey
@@ -1709,6 +1717,10 @@ item:
         together; any line failure rolls back the complete creation.
 
 
+        Vendor, document number and descriptions accept punctuation, including apostrophes, as text. Invalid control characters
+        are rejected. Retained attachments and unresolved document deletions are never assigned to a new expense.
+
+
         Parameters
 
 
@@ -1788,7 +1800,11 @@ item:
   - name: deleteExpense
     request:
       method: DELETE
-      description: 'Permanently delete an expense and its lines.
+      description: 'Permanently delete an expense, its lines and its locally stored attachment.
+
+
+        A confirmed failure before commit restores the data and attachment. Uncertain commits or incomplete file cleanup return
+        a reconciliation error; do not retry automatically. External document links are not downloaded or deleted.
 
 
         Parameters
