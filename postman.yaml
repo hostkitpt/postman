@@ -4211,9 +4211,9 @@ item:
         in progress returns operation_in_progress. Do not run a manual application submission concurrently with this operation.
 
 
-        Returns the saved uniqid, source, license_number, year, month and status. submitted means accepted for processing;
-        municipal submission can still be pending, and it does not mean paid or settled. Poll getCityTaxDeclarations using
-        uniqid for the current declaration state.
+        Returns the saved uniqid, license_number, year, month and status. submitted means accepted for processing; municipal
+        submission can still be pending, and it does not mean paid or settled. Poll getCityTaxDeclarations using uniqid for
+        the current declaration state.
 
 
         An uncertain external or persistence outcome returns HTTP 503 citytax_submission_uncertain. A later attempt is blocked
