@@ -55,64 +55,77 @@ info:
     \ exactly `true` or `false`. GET integers use plain decimal text without fractions or exponent notation. Omitted update\
     \ fields are preserved.\n\nAn API key identifies one account. Property operations require `apid` belonging to that account.\
     \ Fiscal operations require an authorized `invoicing_nif`; reservation references also require `apid`. Available operations\
-    \ depend on your account permissions, license and enabled modules.\n\n`addExpense` and `addInvoice` accept optional atomic\
-    \ batches of lines; `addInvoiceLines` adds a batch to an existing draft. Batches contain at most 20 lines and must fit\
-    \ the body size limit. Invoice closing is always explicit.\n\n### Reservation filters\n\nIdentity and list filters cannot\
-    \ be combined: rcode/CM selectors reject from_date, to_date, reservation_date, date_filter, room, provider, language and\
-    \ nif rather than ignoring them. Invalid combinations return HTTP 422. Incomplete or conflicting channel-manager selectors\
-    \ are also rejected.\n\nDate listing intersects supplied filters; it is not an overlap search. Without `date_filter`,\
-    \ `from_date` constrains check-in and `to_date` constrains checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`,\
-    \ both boundaries apply to that date and include the selected end day.\n\n### Retries\n\nThe API does not deduplicate\
-    \ write requests or replay stored responses. After a timeout or uncertain result, check application state before retrying\
-    \ a write. Repeating a creation request can create another resource. Each retry requires a fresh timestamp, nonce and\
-    \ signature.\n\n## Key permissions\n\nAccounts may have up to five API keys, each with read-only or read/write access.\
-    \ Every key can read; write access is optional and new keys default to read-only. There are no write-only keys. Keys exist\
-    \ until deleted; deleting a key frees a slot. GET operations require read, except getKeycode which can create a lock code\
-    \ and requires write. POST/PATCH/DELETE require write. Missing permission returns HTTP 403 permission_denied before dispatch.\
-    \ IP whitelist rules remain account-wide.\n\n## Responses\n\nSuccessful responses contain `status: \"success\"`, `data`\
-    \ and `meta.request_id`. Each documented response data schema describes `data`, not the envelope root. POST `add*` operations\
-    \ return HTTP 201; other successful operations return HTTP 200.\n\nNo cursor pagination is provided. City-tax declarations\
-    \ and service users support their documented `limit` and `offset` parameters.\n\n## Errors\n\nErrors contain `status:\
-    \ \"failure\"`, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP errors include 400,\
-    \ 401, 403, 404, 405, 409, 413, 415, 422, 500, 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\
-    \n| HTTP status | Description |\n| --- | --- |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid,\
-    \ expired or replayed authentication. |\n| 403 | API key read/write permission, account/property/NIF authorization, license,\
-    \ module or IP restriction. |\n| 404 | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies\
-    \ the required method. |\n| 409 | Identity, shared-profile or resource-state conflict. |\n| 413 | Request body, expense\
-    \ file or inline city-tax documents exceed the endpoint limit. |\n| 415 | Unsupported request media type. |\n| 422 | Typed\
+    \ depend on your account permissions, license and enabled modules.\n\n`addExpense` and `addInvoice` require a `lines`\
+    \ array containing 1 to 20 lines. The document and all lines are created atomically in one request: any line failure rolls\
+    \ back the complete creation. The entire JSON body must fit 8192 bytes. An invoice remains a draft until explicitly closed\
+    \ with `closeInvoice`.\n\n### Reservation filters\n\nIdentity and list filters cannot be combined: rcode/CM selectors\
+    \ reject from_date, to_date, reservation_date, date_filter, room, provider, language and nif rather than ignoring them.\
+    \ Invalid combinations return HTTP 422. Incomplete or conflicting channel-manager selectors are also rejected.\n\nDate\
+    \ listing intersects supplied filters; it is not an overlap search. Without `date_filter`, `from_date` constrains check-in\
+    \ and `to_date` constrains checkout at midnight. With `date_filter=checkin` or `date_filter=checkout`, both boundaries\
+    \ apply to that date and include the selected end day.\n\n### Retries\n\nThe API does not deduplicate write requests or\
+    \ replay stored responses. After a timeout or uncertain result, check application state before retrying a write. Repeating\
+    \ a creation request can create another resource. Each retry requires a fresh timestamp, nonce and signature.\n\n## Key\
+    \ permissions\n\nAccounts may have up to five API keys, each with read-only or read/write access. Every key can read;\
+    \ write access is optional and new keys default to read-only. There are no write-only keys. Keys exist until deleted;\
+    \ deleting a key frees a slot. GET operations require read, except getKeycode which can create a lock code and requires\
+    \ write. POST/PATCH/DELETE require write. Missing permission returns HTTP 403 permission_denied before dispatch. IP whitelist\
+    \ rules remain account-wide.\n\n## Responses\n\nSuccessful responses contain `status: \"success\"`, `data` and `meta.request_id`.\
+    \ Each documented response data schema describes `data`, not the envelope root. POST `add*` operations return HTTP 201;\
+    \ other successful operations return HTTP 200.\n\nNo cursor pagination is provided. City-tax declarations and service\
+    \ users support their documented `limit` and `offset` parameters.\n\n## Errors\n\nErrors contain `status: \"failure\"\
+    `, `error.code`, `error.message`, optional `error.field` and `meta.request_id`. HTTP errors include 400, 401, 403, 404,\
+    \ 405, 409, 413, 415, 422, 500, 501 and 503. Responses use `Cache-Control: no-store` and `X-Request-ID`.\n\n| HTTP status\
+    \ | Description |\n| --- | --- |\n| 400 | Invalid request or business selector. |\n| 401 | Missing, invalid, expired or\
+    \ replayed authentication. |\n| 403 | API key read/write permission, account/property/NIF authorization, license, module\
+    \ or IP restriction. |\n| 404 | Operation or resource not found. |\n| 405 | Incorrect HTTP method; Allow identifies the\
+    \ required method. |\n| 409 | Identity, shared-profile or resource-state conflict. |\n| 413 | Request body, expense file\
+    \ or inline city-tax documents exceed the endpoint limit. |\n| 415 | Unsupported request media type. |\n| 422 | Typed\
     \ schema or document validation failed. |\n| 500 | Internal error; internal details are not exposed. |\n| 501 | Requested\
     \ source capability is unsupported, including remote iTaxas PDF delivery. |\n| 503 | Required handler, contract, transactional\
     \ table or service is unavailable. |\n| 429 | Rate limit exceeded at the gateway. Follow the Rate Limit retry guidance.\
     \ |\n\n```json\n{\"status\":\"failure\",\"error\":{\"code\":\"permission_denied\",\"message\":\"API key does not have\
-    \ the required permission\"},\"meta\":{\"request_id\":\"example-request-id\"}}\n```\n\n## Enumerations\n\nSend these request\
-    \ values exactly as listed. Defaults and required fields remain defined by each endpoint.\n\n### Properties license types\n\
-    \n| Value | Description |\n| --- | --- |\n| `RNAL` | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL`\
-    \ | Regional short-term rental |\n\n### Properties typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio\
-    \ |\n| `T1` | 1 bedroom |\n| `T2` | 2 bedrooms |\n| `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n\
-    | `T6` | 6 bedrooms |\n| `NA` | Other |\n\n### Reservation date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin`\
-    \ | Check-in date |\n| `checkout` | Checkout date |\n\n### Guest document types\n\n| Value | Description |\n| --- | ---\
-    \ |\n| `P` | Passport |\n| `B` | Identity card |\n| `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n\
-    | `Passaporte` | Passport |\n| `Passport` | Passport |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation\
-    \ extra types\n\n| Value | Description |\n| --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock\
-    \ providers\n\n| Value | Description |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n\
-    | `salto` | Salto |\n| `omnitec` | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY\
-    \ |\n\n### Expense documents\n\n| Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note\
-    \ |\n\n### Expense types\n\n| Value | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable\
-    \ expense |\n\n### Invoice types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice\
-    \ |\n\n### Series document types\n\n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice\
-    \ |\n| `RG` | Receipt |\n\n### Fiscal regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n\
-    | `PT-MA` | Madeira |\n| `PT-AC` | Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n|\
-    \ `ARREND` | Lease |\n| `SUBARR` | Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE`\
-    \ | Machinery rental |\n\n### Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent\
-    \ housing |\n| `H_NPER` | Non-permanent housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description\
-    \ |\n| --- | --- |\n| `MENSAL` | Monthly |\n| `MENORM` | Less than one month |\n\n### City tax sources\n\n| Value | Description\
-    \ |\n| --- | --- |\n| `tmtai` | Hostkit City Tax |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\
-    \n| Value |\n| --- |\n| `9flats` |\n| `abreu` |\n| `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago`\
-    \ |\n| `atraveo` |\n| `belvilla` |\n| `blueground` |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info`\
-    \ |\n| `campspace` |\n| `clickstay` |\n| `corporate` |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n\
-    | `edreams` |\n| `email` |\n| `eurofun` |\n| `eurohike` |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com`\
-    \ |\n| `google` |\n| `hometogo` |\n| `hostelworld` |\n| `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip`\
-    \ |\n| `hrs` |\n| `inntravel` |\n| `jetcamp` |\n| `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere`\
+    \ the required permission\"},\"meta\":{\"request_id\":\"example-request-id\"}}\n```\n\n### Write Outcomes\n\nUse `meta.request_id`\
+    \ or `X-Request-ID` when contacting support. Authorized writes are audited by request, API key, endpoint, affected resources\
+    \ and outcome; credentials, file contents and personal-data values are not included.\n\n| Error code | Action |\n| ---\
+    \ | --- |\n| `audit_unavailable` | The write cannot proceed while audit storage is unavailable. |\n| `audit_incomplete`\
+    \ | Effects may already have occurred. Contact support to reconcile the request before retrying. |\n| `commit_uncertain`\
+    \ | The commit could not be confirmed. Check the resource and contact support before repeating the write. |\n| `at_submission_uncertain`,\
+    \ `at_registration_uncertain` | Reconcile the external fiscal operation before retrying. |\n| `siba_submission_failed`\
+    \ | Submission could not be confirmed; check its state before retrying. |\n| `siba_persistence_uncertain` | SIBA accepted\
+    \ the submission but local completion failed. Reconcile it before retrying. |\n| `reservation_payment_reconciliation_required`,\
+    \ `stripe_unavailable` | If the error identifies an already-created reservation, reconcile that reservation and its payment.\
+    \ Do not repeat `addReservation`. |\n| `document_publication_pending` | Reconcile document publication before retrying.\
+    \ |\n\nAn error after an external action or a lost acknowledgement does not prove that nothing changed. Never retry these\
+    \ outcomes automatically.\n\n## Enumerations\n\nSend these request values exactly as listed. Defaults and required fields\
+    \ remain defined by each endpoint.\n\n### Properties license types\n\n| Value | Description |\n| --- | --- |\n| `RNAL`\
+    \ | Short-term rental |\n| `RNET` | Touristic development |\n| `RRAL` | Regional short-term rental |\n\n### Properties\
+    \ typologies\n\n| Value | Description |\n| --- | --- |\n| `T0` | Studio |\n| `T1` | 1 bedroom |\n| `T2` | 2 bedrooms |\n\
+    | `T3` | 3 bedrooms |\n| `T4` | 4 bedrooms |\n| `T5` | 5 bedrooms |\n| `T6` | 6 bedrooms |\n| `NA` | Other |\n\n### Reservation\
+    \ date filters\n\n| Value | Description |\n| --- | --- |\n| `checkin` | Check-in date |\n| `checkout` | Checkout date\
+    \ |\n\n### Guest document types\n\n| Value | Description |\n| --- | --- |\n| `P` | Passport |\n| `B` | Identity card |\n\
+    | `ID` | Identity card |\n| `BI` | Identity card |\n| `O` | Other |\n| `Passaporte` | Passport |\n| `Passport` | Passport\
+    \ |\n| `Outro` | Other |\n| `Other` | Other |\n\n### Product and reservation extra types\n\n| Value | Description |\n\
+    | --- | --- |\n| `S` | Service |\n| `P` | Product |\n| `I` | Tax |\n\n### Smartlock providers\n\n| Value | Description\
+    \ |\n| --- | --- |\n| `nuki` | Nuki |\n| `homeit` | Homeit |\n| `ttlock` | TTLock |\n| `salto` | Salto |\n| `omnitec`\
+    \ | Omnitec |\n| `voyager` | Voyager |\n| `tedee` | Tedee |\n| `assa_abloy` | ASSA ABLOY |\n\n### Expense documents\n\n\
+    | Value | Description |\n| --- | --- |\n| `invoice` | Invoice |\n| `cnote` | Credit note |\n\n### Expense types\n\n| Value\
+    \ | Description |\n| --- | --- |\n| `fixed` | Fixed expense |\n| `variable` | Variable expense |\n\n### Invoice types\n\
+    \n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n\n### Series document types\n\
+    \n| Value | Description |\n| --- | --- |\n| `FR` | Invoice-receipt |\n| `FT` | Invoice |\n| `RG` | Receipt |\n\n### Fiscal\
+    \ regions\n\n| Value | Description |\n| --- | --- |\n| `PT` | Portugal mainland |\n| `PT-MA` | Madeira |\n| `PT-AC` |\
+    \ Azores |\n\n### Rental contract types\n\n| Value | Description |\n| --- | --- |\n| `ARREND` | Lease |\n| `SUBARR` |\
+    \ Sublease |\n| `PROMES` | Promise to lease |\n| `CEDENC` | Assignment of use |\n| `ALUGUE` | Machinery rental |\n\n###\
+    \ Rental contract purposes\n\n| Value | Description |\n| --- | --- |\n| `H_PERM` | Permanent housing |\n| `H_NPER` | Non-permanent\
+    \ housing |\n| `N_HABI` | Non-residential |\n\n### Rent periods\n\n| Value | Description |\n| --- | --- |\n| `MENSAL`\
+    \ | Monthly |\n| `MENORM` | Less than one month |\n\n### City tax sources\n\n| Value | Description |\n| --- | --- |\n\
+    | `tmtai` | Hostkit City Tax |\n| `itaxas` | iTaxas |\n\n### Reservations providers (lower case)\n\n| Value |\n| --- |\n\
+    | `9flats` |\n| `abreu` |\n| `agoda` |\n| `airbnb` |\n| `albanoaktiv` |\n| `amin` |\n| `archipelago` |\n| `atraveo` |\n\
+    | `belvilla` |\n| `blueground` |\n| `booked` |\n| `booking.com` |\n| `campcation` |\n| `camping.info` |\n| `campspace`\
+    \ |\n| `clickstay` |\n| `corporate` |\n| `direct` |\n| `dorms.com` |\n| `dtravel` |\n| `ectravel` |\n| `edreams` |\n|\
+    \ `email` |\n| `eurofun` |\n| `eurohike` |\n| `expedia` |\n| `flatio` |\n| `flipkey` |\n| `glampings.com` |\n| `google`\
+    \ |\n| `hometogo` |\n| `hostelworld` |\n| `hostelsclub` |\n| `hotels.com` |\n| `housinganywhere` |\n| `housetrip` |\n\
+    | `hrs` |\n| `inntravel` |\n| `jetcamp` |\n| `marriott` |\n| `mbtravel` |\n| `melotravel` |\n| `misterbnb` |\n| `monvoyageamadere`\
     \ |\n| `muchosol` |\n| `mycamper` |\n| `odisseias` |\n| `olimar` |\n| `oliverstravels` |\n| `oyo` |\n| `phone` |\n| `pincamp`\
     \ |\n| `pitchup` |\n| `plumguide` |\n| `profitroom` |\n| `roomarama` |\n| `scapetravel` |\n| `seabreeze` |\n| `solmar`\
     \ |\n| `spotahome` |\n| `splvillas` |\n| `stsurleshauteurs` |\n| `traum` |\n| `travelagency` |\n| `travelagent` |\n| `travelstaytion`\
@@ -162,12 +175,20 @@ info:
     \ | Maintenance (Manuten\xE7\xE3o) |\n| `10` | Services (Servi\xE7os) |\n| `11` | Software |\n| `12` | Utensils (Utens\xED\
     lios) |\n| `13` | Utilities (Utilit\xE1rios) |\n| `14` | Insurance (Seguros) |\n| `15` | Human Resources (Recursos Humanos)\
     \ |\n| `16` | Legal (Jur\xEDdico) |\n| `17` | PMC (Comiss\xF5es de Gest\xE3o de Alojamentos) |\n| `18` | Banking (Banc\xE1\
-    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-07\n\n- Added `uploadExpenseFile`\
-    \ for PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded file. This endpoint alone accepts a raw\
-    \ JSON body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract` and `deleteRentalContract` for draft\
-    \ contracts. Submission activates a contract only after confirmed AT acceptance; uncertain results require reconciliation\
-    \ before retrying.\n- `getCityTaxDeclarations` searches both declaration sources without a `source` request parameter.\
-    \ A bare `uniqid` searches both sources; a source-qualified `id` selects one declaration.\n- Removed `getExpenseCategories`;\
+    rio) |\n| `19` | Rents (Rendas) |\n| `20` | OTAs (Plataformas) |\n\n## Changelog\n\n### 2026-10-08\n\n- `addExpense` and\
+    \ `addInvoice` now require 1 to 20 `lines` in the creation request. Any line failure rolls back the document and all lines.\
+    \ Invoices remain drafts until `closeInvoice`.\n- Removed the separate `addExpenseLine`, `addInvoiceLine` and `addInvoiceLines`\
+    \ endpoints from API v2. Create each document and its lines together; API v1 is unchanged.\n- Added correlated auditing\
+    \ of authorized writes and explicit `commit_uncertain` errors.\n- Strengthened guest validation, SIBA document handling\
+    \ and account-specific SAF-T generation.\n- Serialized receipt, credit-note, guest, expense-line and reservation-extra\
+    \ writes to prevent duplicate or partial changes.\n- Preserve previous expense attachments and SAF-T exports on confirmed\
+    \ failed replacement; uncertain commits require reconciliation instead of automatic restoration or retry.\n- New rental-contract\
+    \ references are unique and opaque, independent of draft deletion.\n\n### 2026-10-07\n\n- Added `uploadExpenseFile` for\
+    \ PDF, JPG, JPEG and PNG documents sent as Base64, up to 5 MiB per decoded file. This endpoint alone accepts a raw JSON\
+    \ body up to 7 MiB.\n- Added `updateRentalContract`, `submitRentalContract` and `deleteRentalContract` for draft contracts.\
+    \ Submission activates a contract only after confirmed AT acceptance; uncertain results require reconciliation before\
+    \ retrying.\n- `getCityTaxDeclarations` searches both declaration sources without `source`, `apid` or `id` request parameters.\
+    \ `uniqid` searches both sources; `license_number` also matches complete members of merged declarations.\n- Removed `getExpenseCategories`;\
     \ category IDs remain documented in Enumerations.\n\n### 2.0.0\n\n- Account-wide API keys with mandatory HMAC-SHA256 authentication\
     \ and read-only or read/write permissions. Existing account IP whitelist rules also apply to v2.\n- GET query filters\
     \ for reads; POST, PATCH and DELETE with JSON bodies for writes. Confirm uncertain write outcomes before retrying; repeated\
@@ -1670,15 +1691,15 @@ item:
   - name: addExpense
     request:
       method: POST
-      description: 'Create an expense, optionally with atomic lines; without lines the header has zero totals.
+      description: 'Create an expense with one or more lines in a single atomic request.
 
 
         document=cnote requires type=variable. Nonzero pmc requires the PMC addon. Requires an active property with the expenses
         module.
 
 
-        Optional lines are committed atomically with the header, require transactional InnoDB tables, and are bounded at 20
-        within the 8192-byte body limit.
+        lines is required and contains 1 to 20 lines within the 8192-byte body limit. The header and all lines are committed
+        together; any line failure rolls back the complete creation.
 
 
         Parameters
@@ -1713,8 +1734,8 @@ item:
 
         | `pmc` | integer | No | 0 exclude, 1 invoice expense, 2 deduct expense; default 0. minimum: 0; maximum: 2 |
 
-        | `lines` | array of object | No | Atomic expense lines; the entire signed JSON body must fit 8192 bytes. minItems:
-        1; maxItems: 20 |
+        | `lines` | array of object | Yes | Required atomic expense lines; the entire signed JSON body must fit 8192 bytes.
+        minItems: 1; maxItems: 20 |
 
         | `lines[].description` | string | Yes | Line description. maxLength: 255 |
 
@@ -1749,64 +1770,10 @@ item:
       body:
         mode: raw
         raw: "{\n  \"apid\": 123,\n  \"category\": 20,\n  \"document\": \"invoice\",\n  \"type\": \"variable\",\n  \"vendor\"\
-          : \"Example Vendor\",\n  \"number\": \"FT EXAMPLE\",\n  \"date\": \"2026-10-01\",\n  \"active\": true,\n  \"lines\"\
-          : [\n    {\n      \"description\": \"Example repair\",\n      \"amount\": \"100.00\",\n      \"vat_rate\": \"23.00\"\
-          \n    }\n  ]\n}"
-        options:
-          raw:
-            language: json
-    response: []
-  - name: addExpenseLine
-    request:
-      method: POST
-      description: 'Add one expense line and recalculate totals.
-
-
-        Parameters
-
-
-        | Field | Type | Required | Description / constraints |
-
-        | --- | --- | --- | --- |
-
-        | `apid` | integer | Yes | Property ID belonging to the authenticated account.  |
-
-        | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
-
-        | `description` | string | Yes | Line description. maxLength: 255 |
-
-        | `amount` | string | Yes | Nonnegative amount, at most two decimal places. pattern: "^[0-9]{1,10}(\\.[0-9]{1,2})?$"
-        |
-
-        | `vat_rate` | string | Yes | VAT percentage 0 to 100, at most two decimal places. pattern: "^([0-9]{1,2}(\\.[0-9]{1,2})?\|100(\\.0{1,2})?)$"
-        |'
-      header:
-      - key: Accept
-        value: application/json
-      - key: X-API-Key
-        value: '{{apiKey}}'
-        description: Set apiKey locally; never share the real value.
-      - key: X-Timestamp
-        value: '{{apiTimestamp}}'
-        description: Generated locally by the collection HMAC pre-request script for each request.
-      - key: X-Nonce
-        value: '{{apiNonce}}'
-        description: Generated locally by the collection HMAC pre-request script for each request.
-      - key: X-Signature
-        value: '{{apiSignature}}'
-        description: Generated locally by the collection HMAC pre-request script for each request.
-      - key: Content-Type
-        value: application/json
-      url:
-        raw: '{{baseUrl}}/addExpenseLine'
-        host:
-        - '{{baseUrl}}'
-        path:
-        - addExpenseLine
-      body:
-        mode: raw
-        raw: "{\n  \"apid\": 123,\n  \"id\": 1,\n  \"description\": \"Example repair\",\n  \"amount\": \"100.00\",\n  \"vat_rate\"\
-          : \"23.00\"\n}"
+          : \"Example Vendor\",\n  \"number\": \"FT EXAMPLE\",\n  \"date\": \"2026-10-01\",\n  \"lines\": [\n    {\n     \
+          \ \"description\": \"Example repair\",\n      \"amount\": \"100.00\",\n      \"vat_rate\": \"23.00\"\n    },\n \
+          \   {\n      \"description\": \"Example materials\",\n      \"amount\": \"25.00\",\n      \"vat_rate\": \"23.00\"\
+          \n    }\n  ],\n  \"active\": true\n}"
         options:
           raw:
             language: json
@@ -2206,14 +2173,16 @@ item:
     - name: addInvoice
       request:
         method: POST
-        description: 'Create an open fiscal invoice; rcode is optional. Add lines and close it explicitly.
+        description: 'Create a draft fiscal invoice with one or more lines in a single atomic request; rcode is optional.
+          Close it explicitly with closeInvoice.
 
 
           When rcode is supplied, require apid and verify the reservation belongs to that property/account.
 
 
-          Validate authorized NIF/series. Optional lines are committed atomically with the draft, require transactional InnoDB
-          tables, and are bounded at 20 within the 8192-byte body limit. Closing is always explicit.
+          Validate authorized NIF/series. lines is required and contains 1 to 20 lines within the 8192-byte body limit. The
+          draft and all lines are committed together; any line failure rolls back the complete creation. Closing is always
+          explicit.
 
 
           Parameters
@@ -2250,8 +2219,8 @@ item:
 
           | `payment_method` | string | No | Payment method; default TB. pattern: "^[A-Za-z0-9._-]{1,20}$" |
 
-          | `lines` | array of object | No | Atomic invoice lines; the entire signed JSON body must fit 8192 bytes. minItems:
-          1; maxItems: 20 |
+          | `lines` | array of object | Yes | Required atomic invoice lines; the entire signed JSON body must fit 8192 bytes.
+          minItems: 1; maxItems: 20 |
 
           | `lines[].product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
 
@@ -2298,159 +2267,9 @@ item:
           raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"customer_id\": \"\",\n  \"name\": \"Example Person\",\n  \"country\"\
             : \"PRT\",\n  \"lines\": [\n    {\n      \"product_id\": \"EXAMPLE1\",\n      \"custom_descr\": \"Example service\"\
             ,\n      \"qty\": \"1\",\n      \"price\": \"10.00\",\n      \"discount\": \"0\",\n      \"vat\": \"23\",\n  \
-            \    \"reason_code\": \"\"\n    }\n  ]\n}"
-          options:
-            raw:
-              language: json
-      response: []
-    - name: addInvoiceLine
-      request:
-        method: POST
-        description: 'Add one line to an open invoice, creating a product if needed.
-
-
-          Parameters
-
-
-          | Field | Type | Required | Description / constraints |
-
-          | --- | --- | --- | --- |
-
-          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
-          "^[A-Za-z0-9._-]{1,64}$" |
-
-          | `series` | string | No | Document series; omission uses the configured default series.  |
-
-          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
-
-          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |
-
-          | `product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
-
-          | `custom_descr` | string | Yes | Line description.  |
-
-          | `qty` | string | Yes | Quantity. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
-
-          | `price` | string | Yes | Nonnegative unit price. pattern: "^[0-9]+(\\.[0-9]+)?$" |
-
-          | `discount` | string | Yes | Line discount. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
-
-          | `vat` | string | Yes | VAT percentage. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
-
-          | `reason_code` | string | Yes | Exemption reason code, or empty string. pattern: "^[A-Za-z0-9._-]*$" |
-
-          | `region` | string | No | Fiscal product region; default PT. enum: ["PT","PT-MA","PT-AC"] |
-
-          | `type` | string | No | Product type; default S. enum: ["S","P","I"] |'
-        header:
-        - key: Accept
-          value: application/json
-        - key: X-API-Key
-          value: '{{apiKey}}'
-          description: Set apiKey locally; never share the real value.
-        - key: X-Timestamp
-          value: '{{apiTimestamp}}'
-          description: Generated locally by the collection HMAC pre-request script for each request.
-        - key: X-Nonce
-          value: '{{apiNonce}}'
-          description: Generated locally by the collection HMAC pre-request script for each request.
-        - key: X-Signature
-          value: '{{apiSignature}}'
-          description: Generated locally by the collection HMAC pre-request script for each request.
-        - key: Content-Type
-          value: application/json
-        url:
-          raw: '{{baseUrl}}/addInvoiceLine'
-          host:
-          - '{{baseUrl}}'
-          path:
-          - addInvoiceLine
-        body:
-          mode: raw
-          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"product_id\": \"EXAMPLE1\",\n  \"custom_descr\"\
-            : \"Example service\",\n  \"qty\": \"1\",\n  \"price\": \"10.00\",\n  \"discount\": \"0\",\n  \"vat\": \"23\"\
-            ,\n  \"reason_code\": \"\"\n}"
-          options:
-            raw:
-              language: json
-      response: []
-    - name: addInvoiceLines
-      request:
-        method: POST
-        description: 'Atomically add a bounded batch of lines to an open invoice; close it explicitly.
-
-
-          Validate authorized NIF/series and open invoice identity. Requires transactional InnoDB tables. No automatic invoice
-          closing.
-
-
-          At most 20 lines; the entire signed JSON body must fit 8192 bytes.
-
-
-          Parameters
-
-
-          | Field | Type | Required | Description / constraints |
-
-          | --- | --- | --- | --- |
-
-          | `invoicing_nif` | string | Yes | Explicit invoicing VAT ID; the backend must verify account authorization. pattern:
-          "^[A-Za-z0-9._-]{1,64}$" |
-
-          | `series` | string | No | Document series; omission uses the configured default series.  |
-
-          | `id` | integer | Yes | Numeric resource/document identity. minimum: 1; maximum: 9007199254740991 |
-
-          | `invoice_type` | string | No | Invoice type; default FR. enum: ["FR","FT"] |
-
-          | `lines` | array of object | Yes | Atomic invoice lines; the entire signed JSON body must fit 8192 bytes. minItems:
-          1; maxItems: 20 |
-
-          | `lines[].product_id` | string | Yes | Product code. pattern: "^[A-Za-z0-9._-]{1,64}$" |
-
-          | `lines[].custom_descr` | string | Yes | Line description.  |
-
-          | `lines[].qty` | string | Yes | Quantity. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
-
-          | `lines[].price` | string | Yes | Nonnegative unit price. pattern: "^[0-9]+(\\.[0-9]+)?$" |
-
-          | `lines[].discount` | string | Yes | Line discount. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
-
-          | `lines[].vat` | string | Yes | VAT percentage. pattern: "^-?[0-9]+(\\.[0-9]+)?$" |
-
-          | `lines[].reason_code` | string | Yes | Exemption reason code, or empty string. pattern: "^[A-Za-z0-9._-]*$" |
-
-          | `lines[].region` | string | No | Fiscal product region; default PT. enum: ["PT","PT-MA","PT-AC"] |
-
-          | `lines[].type` | string | No | Product type; default S. enum: ["S","P","I"] |'
-        header:
-        - key: Accept
-          value: application/json
-        - key: X-API-Key
-          value: '{{apiKey}}'
-          description: Set apiKey locally; never share the real value.
-        - key: X-Timestamp
-          value: '{{apiTimestamp}}'
-          description: Generated locally by the collection HMAC pre-request script for each request.
-        - key: X-Nonce
-          value: '{{apiNonce}}'
-          description: Generated locally by the collection HMAC pre-request script for each request.
-        - key: X-Signature
-          value: '{{apiSignature}}'
-          description: Generated locally by the collection HMAC pre-request script for each request.
-        - key: Content-Type
-          value: application/json
-        url:
-          raw: '{{baseUrl}}/addInvoiceLines'
-          host:
-          - '{{baseUrl}}'
-          path:
-          - addInvoiceLines
-        body:
-          mode: raw
-          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"lines\": [\n    {\n      \"product_id\": \"EXAMPLE1\"\
-            ,\n      \"custom_descr\": \"Example service\",\n      \"qty\": \"1\",\n      \"price\": \"10.00\",\n      \"\
-            discount\": \"0\",\n      \"vat\": \"23\",\n      \"reason_code\": \"\"\n    }\n  ]\n}"
+            \    \"reason_code\": \"\"\n    },\n    {\n      \"product_id\": \"EXAMPLE2\",\n      \"custom_descr\": \"Example\
+            \ additional service\",\n      \"qty\": \"1\",\n      \"price\": \"5.00\",\n      \"discount\": \"0\",\n     \
+            \ \"vat\": \"23\",\n      \"reason_code\": \"\"\n    }\n  ]\n}"
           options:
             raw:
               language: json
@@ -3004,6 +2823,17 @@ item:
         description: 'Generate a SAF-T file for an authorized fiscal account.
 
 
+          Generation and reading are serialized for each account, VAT ID and period. Concurrent requests return operation_in_progress.
+
+
+          Validate the complete export before replacing the previous document. Generation or validation failures preserve
+          the previous export.
+
+
+          A generated export is limited to 40 MiB. Reconcile document_publication_pending or commit_uncertain outcomes before
+          retrying; this period remains unavailable until recovery is completed.
+
+
           Parameters
 
 
@@ -3051,6 +2881,14 @@ item:
       request:
         method: GET
         description: 'Read an already generated SAF-T file as base64 content.
+
+
+          Read a complete document belonging to the authenticated account and fiscal period. Missing documents return document_not_found;
+          exports above 40 MiB return document_too_large.
+
+
+          Concurrent generation or reading of the same fiscal period returns operation_in_progress. A pending recovery returns
+          document_publication_pending instead of exposing a document with inconsistent generation metadata.
 
 
           Parameters
@@ -3391,6 +3229,9 @@ item:
 
 
         Tenant arrays are bounded at 20 and the whole UTF-8 body at 8192 bytes. Validate actual calendar dates and countries.
+
+
+        contract_ref is an opaque unique reference. Do not derive or infer its value from a contract count.
 
 
         Parameters
