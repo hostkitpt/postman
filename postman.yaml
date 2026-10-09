@@ -2292,7 +2292,7 @@ item:
             ,\n      \"qty\": \"1\",\n      \"price\": \"10.00\",\n      \"discount\": \"0\",\n      \"vat\": \"23\",\n  \
             \    \"reason_code\": \"\"\n    },\n    {\n      \"product_id\": \"EXAMPLE2\",\n      \"custom_descr\": \"Example\
             \ additional service\",\n      \"qty\": \"1\",\n      \"price\": \"5.00\",\n      \"discount\": \"0\",\n     \
-            \ \"vat\": \"23\",\n      \"reason_code\": \"\"\n    }\n  ]\n}"
+            \ \"vat\": \"23\",\n      \"reason_code\": \"\"\n    }\n  ],\n  \"invoice_type\": \"FR\"\n}"
           options:
             raw:
               language: json
@@ -2343,7 +2343,7 @@ item:
           - closeInvoice
         body:
           mode: raw
-          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1\n}"
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"invoice_type\": \"FR\"\n}"
           options:
             raw:
               language: json
@@ -2394,7 +2394,7 @@ item:
           - deleteInvoice
         body:
           mode: raw
-          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1\n}"
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"id\": 1,\n  \"invoice_type\": \"FR\"\n}"
           options:
             raw:
               language: json
@@ -2506,7 +2506,8 @@ item:
           - addCreditNote
         body:
           mode: raw
-          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"refseries\": \"EXAMPLE\",\n  \"refid\": 1\n}"
+          raw: "{\n  \"invoicing_nif\": \"123456789\",\n  \"refseries\": \"EXAMPLE\",\n  \"refid\": 1,\n  \"invoice_type\"\
+            : \"FR\"\n}"
           options:
             raw:
               language: json
